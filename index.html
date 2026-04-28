@@ -1802,8 +1802,9 @@ body {
   <div class="settings-modal">
     <h3>⚙️ API 키 설정</h3>
     <div class="desc">
-      🔒 <strong>이 키는 이 기기 브라우저에만 저장</strong>되고 어디로도 전송되지 않습니다.<br>
-      Google이 직접 호출되며, 라이프 OS는 중간에 끼지 않아요.
+      🔒 <strong>이 키는 이 기기 브라우저에 저장</strong>되며, Google/카카오를 직접 호출합니다.<br>
+      ☁️ <strong>가족 동기화 켜면</strong> 가족 모두가 같은 키를 공유 (한 명만 입력하면 끝)<br>
+      ⚠️ 가족 4명이 동시 사용 시 한도 빨리 소진될 수 있어요
     </div>
 
     <div class="field">
@@ -2377,6 +2378,7 @@ function startRealtimeSync() {
     'lifeos-health-v1': 'health',
     'lifeos-maintenance-v1': 'maintenance',
     'lifeos-calendar-v1': 'calendar',
+    'lifeos-api-keys': 'api-keys',
   };
 
   const myDevice = LifeOSSync.getDeviceLabel();
@@ -2399,6 +2401,10 @@ function startRealtimeSync() {
       else if (storageKey === 'lifeos-home-v1') loadHomeStats();
       else if (storageKey === 'lifeos-health-v1') loadHealthStats();
       else if (storageKey === 'lifeos-maintenance-v1') loadMaintenanceStats();
+      else if (storageKey === 'lifeos-api-keys') {
+        // API 키 갱신 시 메모리에도 반영
+        try { apiKeys = JSON.parse(localStorage.getItem(API_KEYS_STORAGE) || '{}'); } catch(e) {}
+      }
 
       // 일정 달력 갱신
       if (storageKey === 'lifeos-kids-v1' || storageKey === 'lifeos-calendar-v1' ||
@@ -2411,6 +2417,7 @@ function startRealtimeSync() {
       const moduleNames = {
         gagebu: '가계부', travel: '여행', kids: '자녀',
         home: '가전', health: '건강', maintenance: '집안 관리', calendar: '일정',
+        'api-keys': 'API 키',
       };
       showToast(`🔄 ${moduleNames[moduleKey]} 업데이트됨 (${meta.updatedBy})`);
     });
@@ -2447,6 +2454,7 @@ saveManualEvents = function(events) {
           'health': 'lifeos-health-v1',
           'maintenance': 'lifeos-maintenance-v1',
           'calendar': 'lifeos-calendar-v1',
+          'api-keys': 'lifeos-api-keys',
         };
         let updated = 0;
         for (const [moduleKey, storageKey] of Object.entries(moduleMap)) {
@@ -2457,6 +2465,10 @@ saveManualEvents = function(events) {
           if (localRaw !== cloudStr) {
             localStorage.setItem(storageKey, cloudStr);
             updated++;
+            // API 키는 메모리에도 즉시 반영
+            if (storageKey === 'lifeos-api-keys') {
+              try { apiKeys = JSON.parse(cloudStr); } catch(e) {}
+            }
           }
         }
         if (updated > 0) {
@@ -4260,6 +4272,10 @@ function loadApiKeys() {
 }
 function saveApiKeysToStorage(keys) {
   localStorage.setItem(API_KEYS_STORAGE, JSON.stringify(keys));
+  // 가족 동기화: 클라우드에도 저장 (가족 모두가 같은 키 공유)
+  if (window.LifeOSSync && LifeOSSync.isConfigured()) {
+    LifeOSSync.save('api-keys', keys).catch(e => console.warn('API 키 sync 실패:', e));
+  }
 }
 let apiKeys = loadApiKeys();
 

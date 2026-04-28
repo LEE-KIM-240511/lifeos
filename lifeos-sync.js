@@ -204,6 +204,7 @@
       'lifeos-health-v1': 'health',
       'lifeos-maintenance-v1': 'maintenance',
       'lifeos-calendar-v1': 'calendar',
+      'lifeos-api-keys': 'api-keys',
     };
     const results = { uploaded: [], skipped: [], failed: [] };
     for (const [storageKey, moduleKey] of Object.entries(moduleKeys)) {
@@ -234,6 +235,7 @@
       'health': 'lifeos-health-v1',
       'maintenance': 'lifeos-maintenance-v1',
       'calendar': 'lifeos-calendar-v1',
+      'api-keys': 'lifeos-api-keys',
     };
     const results = { downloaded: [], empty: [], failed: [] };
     for (const [moduleKey, storageKey] of Object.entries(moduleKeys)) {
