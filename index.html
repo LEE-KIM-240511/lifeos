@@ -1405,6 +1405,12 @@ body {
   .ai-modal-bg { padding: 0; }
 }
 </style>
+
+<!-- Firebase SDK (가족 실시간 동기화) -->
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+<script src="lifeos-sync.js"></script>
 </head>
 <body>
 <div class="app">
@@ -2191,8 +2197,275 @@ document.getElementById('restoreFileInput').addEventListener('change', (e) => {
   const reader = new FileReader();
   reader.onload = (ev) => importAllData(ev.target.result);
   reader.readAsText(file);
-  e.target.value = ''; // 같은 파일 다시 선택 가능하게
+  e.target.value = '';
 });
+
+// ============================
+// ☁️ 가족 실시간 동기화 (Firebase)
+// ============================
+
+// 모달 close 헬퍼 (전역)
+window.closeAiModal = function(id) {
+  document.getElementById(id).classList.remove('show');
+};
+
+// 동기화 상태 배지 업데이트
+function updateSyncStatusBadge() {
+  const badge = document.getElementById('syncStatus');
+  if (!badge) return;
+  if (window.LifeOSSync && LifeOSSync.isConfigured()) {
+    const fid = LifeOSSync.getFamilyId();
+    badge.textContent = `🟢 연결됨 (${fid.slice(0, 12)}${fid.length > 12 ? '…' : ''})`;
+    badge.style.background = '#D1FAE5';
+    badge.style.color = '#065F46';
+  } else {
+    badge.textContent = '⚪ 미설정';
+    badge.style.background = '#F1F5F9';
+    badge.style.color = 'var(--text-tertiary)';
+  }
+}
+
+// 동기화 설정 모달 열기
+document.getElementById('btnFamilySync').addEventListener('click', () => {
+  const modal = document.getElementById('familySyncModal');
+  const configInput = document.getElementById('firebaseConfigInput');
+  const familyInput = document.getElementById('familyCodeInput');
+  const infoDiv = document.getElementById('syncCurrentInfo');
+  const disconnectBtn = document.getElementById('btnDisconnectSync');
+
+  // 현재 설정 불러오기
+  if (window.LifeOSSync && LifeOSSync.isConfigured()) {
+    const config = LifeOSSync.getConfig();
+    const fid = LifeOSSync.getFamilyId();
+    configInput.value = JSON.stringify(config, null, 2);
+    familyInput.value = fid;
+    infoDiv.style.display = '';
+    infoDiv.innerHTML = `
+      ✅ <strong>현재 연결됨</strong><br>
+      • 프로젝트: ${escapeHtmlForChat(config.projectId || '?')}<br>
+      • 가족 코드: <code>${escapeHtmlForChat(fid)}</code><br>
+      • 디바이스: <code>${escapeHtmlForChat(LifeOSSync.getDeviceLabel())}</code>
+    `;
+    disconnectBtn.style.display = '';
+  } else {
+    configInput.value = '';
+    familyInput.value = '';
+    infoDiv.style.display = 'none';
+    disconnectBtn.style.display = 'none';
+  }
+
+  modal.classList.add('show');
+});
+
+// 연결 버튼
+document.getElementById('btnConnectSync').addEventListener('click', async () => {
+  const configText = document.getElementById('firebaseConfigInput').value.trim();
+  const familyCode = document.getElementById('familyCodeInput').value.trim();
+
+  if (!configText) return showToast('Firebase Config을 입력해주세요');
+  if (!familyCode) return showToast('가족 코드를 입력해주세요');
+
+  // 가족 코드 검증
+  if (!/^[a-zA-Z0-9_-]{4,}$/.test(familyCode)) {
+    return showToast('가족 코드는 영문/숫자/하이픈/밑줄 4자 이상');
+  }
+
+  // Config 파싱
+  let config;
+  try {
+    // 객체 표기법도 받아주기 (key: "value" 형식)
+    let cleanText = configText;
+    if (!cleanText.startsWith('{')) {
+      cleanText = '{' + cleanText.replace(/^[^{]*/, '').replace(/[^}]*$/, '') + '}';
+    }
+    // 1. JSON 시도
+    try {
+      config = JSON.parse(cleanText);
+    } catch(e) {
+      // 2. JS 객체 형식이면 변환 시도
+      const jsLike = cleanText
+        .replace(/(\w+)\s*:/g, '"$1":')  // key: → "key":
+        .replace(/'/g, '"')              // ' → "
+        .replace(/,\s*}/g, '}')          // 마지막 콤마 제거
+        .replace(/,\s*]/g, ']');
+      config = JSON.parse(jsLike);
+    }
+  } catch(e) {
+    return showToast('❌ Config 형식이 잘못됐어요. 통째로 복사했는지 확인');
+  }
+
+  // 필수 필드 체크
+  if (!config.apiKey || !config.projectId) {
+    return showToast('❌ apiKey 또는 projectId가 빠졌어요');
+  }
+
+  const isFirstSetup = !LifeOSSync.isConfigured();
+
+  // 저장
+  LifeOSSync.saveConfig(config);
+  LifeOSSync.saveFamilyId(familyCode);
+
+  showToast('☁️ 연결 시도 중...');
+
+  // 초기화 + 데이터 동기화
+  const initResult = await LifeOSSync.init();
+  if (!initResult.success) {
+    LifeOSSync.clearConfig();
+    return showToast('❌ 연결 실패: ' + (initResult.error || initResult.reason));
+  }
+
+  // 첫 설정이면 동기화 방향 묻기
+  if (isFirstSetup) {
+    const choice = confirm(
+      '☁️ 연결 성공!\n\n' +
+      '데이터 동기화 방법을 선택해주세요:\n\n' +
+      '✅ 확인: 이 기기 데이터를 클라우드에 업로드\n' +
+      '   (이 기기에 데이터가 있고, 처음 설정하는 경우)\n\n' +
+      '❌ 취소: 클라우드 데이터를 이 기기로 다운로드\n' +
+      '   (가족이 먼저 설정했고, 새로 합류하는 경우)'
+    );
+
+    if (choice) {
+      const r = await LifeOSSync.uploadAllLocalData();
+      showToast(`☁️ 업로드 완료: ${r.uploaded.length}개 모듈`);
+    } else {
+      const r = await LifeOSSync.downloadAllToLocal();
+      showToast(`📥 다운로드 완료: ${r.downloaded.length}개 모듈`);
+      setTimeout(() => location.reload(), 1500);
+      return;
+    }
+  }
+
+  // 실시간 구독 시작
+  startRealtimeSync();
+
+  closeAiModal('familySyncModal');
+  updateSyncStatusBadge();
+  showToast('✅ 가족 동기화 연결 완료!');
+});
+
+// 연결 해제 버튼
+document.getElementById('btnDisconnectSync').addEventListener('click', () => {
+  if (!confirm('가족 동기화를 해제할까요?\n\n데이터는 이 기기에 그대로 남아있어요.\n클라우드 데이터는 삭제되지 않습니다.')) return;
+  LifeOSSync.clearConfig();
+  closeAiModal('familySyncModal');
+  updateSyncStatusBadge();
+  showToast('🔌 연결이 해제되었어요');
+});
+
+// 모달 배경 클릭으로 닫기
+document.getElementById('familySyncModal').addEventListener('click', (e) => {
+  if (e.target === e.currentTarget) closeAiModal('familySyncModal');
+});
+
+// 실시간 구독: 다른 기기에서 변경되면 이 기기에도 반영
+function startRealtimeSync() {
+  if (!window.LifeOSSync || !LifeOSSync.isConfigured()) return;
+
+  const moduleMap = {
+    'gagebu-full-v1': 'gagebu',
+    'lifeos-travel-v1': 'travel',
+    'lifeos-kids-v1': 'kids',
+    'lifeos-home-v1': 'home',
+    'lifeos-health-v1': 'health',
+    'lifeos-maintenance-v1': 'maintenance',
+    'lifeos-calendar-v1': 'calendar',
+  };
+
+  const myDevice = LifeOSSync.getDeviceLabel();
+
+  Object.entries(moduleMap).forEach(([storageKey, moduleKey]) => {
+    LifeOSSync.onChange(moduleKey, (cloudData, meta) => {
+      if (cloudData == null) return;
+      // 자기 자신이 방금 쓴 거면 무시
+      if (meta.updatedBy === myDevice) return;
+
+      // 로컬에 저장
+      try {
+        localStorage.setItem(storageKey, JSON.stringify(cloudData));
+      } catch(e) { return; }
+
+      // UI 갱신 (메인 페이지 모듈 카드 stats)
+      if (storageKey === 'gagebu-full-v1') loadGagebuStats();
+      else if (storageKey === 'lifeos-travel-v1') loadTravelStats();
+      else if (storageKey === 'lifeos-kids-v1') loadKidsStats();
+      else if (storageKey === 'lifeos-home-v1') loadHomeStats();
+      else if (storageKey === 'lifeos-health-v1') loadHealthStats();
+      else if (storageKey === 'lifeos-maintenance-v1') loadMaintenanceStats();
+
+      // 일정 달력 갱신
+      if (storageKey === 'lifeos-kids-v1' || storageKey === 'lifeos-calendar-v1' ||
+          storageKey === 'lifeos-travel-v1' || storageKey === 'lifeos-maintenance-v1') {
+        if (typeof renderCalendar === 'function') renderCalendar();
+        if (typeof renderEventsList === 'function') renderEventsList();
+        if (typeof renderNotifBanner === 'function') renderNotifBanner();
+      }
+
+      const moduleNames = {
+        gagebu: '가계부', travel: '여행', kids: '자녀',
+        home: '가전', health: '건강', maintenance: '집안 관리', calendar: '일정',
+      };
+      showToast(`🔄 ${moduleNames[moduleKey]} 업데이트됨 (${meta.updatedBy})`);
+    });
+  });
+}
+
+// 일정 저장 시 클라우드에도 자동 업로드
+const _origSaveManualEvents = saveManualEvents;
+saveManualEvents = function(events) {
+  _origSaveManualEvents(events);
+  if (window.LifeOSSync && LifeOSSync.isConfigured()) {
+    LifeOSSync.save('calendar', { events }).catch(e => console.warn('calendar sync 실패:', e));
+  }
+};
+
+// 페이지 로드 시 자동 초기화
+(async () => {
+  if (!window.LifeOSSync) return;
+  updateSyncStatusBadge();
+
+  if (LifeOSSync.isConfigured()) {
+    const r = await LifeOSSync.init();
+    if (r.success) {
+      console.log('[Sync] 자동 연결 완료');
+      startRealtimeSync();
+
+      // 페이지 로드 시 클라우드 최신 데이터 가져오기 (한 번)
+      try {
+        const moduleMap = {
+          'gagebu': 'gagebu-full-v1',
+          'travel': 'lifeos-travel-v1',
+          'kids': 'lifeos-kids-v1',
+          'home': 'lifeos-home-v1',
+          'health': 'lifeos-health-v1',
+          'maintenance': 'lifeos-maintenance-v1',
+          'calendar': 'lifeos-calendar-v1',
+        };
+        let updated = 0;
+        for (const [moduleKey, storageKey] of Object.entries(moduleMap)) {
+          const cloud = await LifeOSSync.load(moduleKey);
+          if (!cloud || cloud.data == null) continue;
+          const localRaw = localStorage.getItem(storageKey);
+          const cloudStr = JSON.stringify(cloud.data);
+          if (localRaw !== cloudStr) {
+            localStorage.setItem(storageKey, cloudStr);
+            updated++;
+          }
+        }
+        if (updated > 0) {
+          // stats 카드 새로고침
+          loadGagebuStats(); loadTravelStats(); loadKidsStats();
+          loadHomeStats(); loadHealthStats(); loadMaintenanceStats();
+          if (typeof renderCalendar === 'function') renderCalendar();
+        }
+      } catch(e) {
+        console.warn('초기 동기화 실패:', e);
+      }
+    } else {
+      console.warn('[Sync] 자동 연결 실패:', r.reason);
+    }
+  }
+})();
 
 // ============================
 // ☀️ 날씨 (Open-Meteo API, 무료)

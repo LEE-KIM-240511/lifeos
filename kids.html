@@ -232,6 +232,11 @@ header{display:flex;align-items:center;justify-content:space-between;margin-bott
   .title-block h1{font-size:18px;}
 }
 </style>
+<!-- Firebase SDK (가족 실시간 동기화) -->
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+<script src="lifeos-sync.js"></script>
 </head>
 <body>
 
@@ -3186,6 +3191,89 @@ document.getElementById('btnDeletePregnancy').addEventListener('click', () => {
 
 load();
 renderAll();
+
+// ============================
+// ☁️ 가족 실시간 동기화 (Firebase Firestore)
+// ============================
+(function() {
+  const STORAGE_KEY_LOCAL = 'lifeos-kids-v1';
+  const MODULE_KEY = 'kids';
+
+  function safeToast(msg) {
+    if (typeof toast === 'function') toast(msg);
+    else if (typeof showToast === 'function') showToast(msg);
+    else console.log('[Toast]', msg);
+  }
+
+  function reloadAndRender() {
+    try {
+      if (typeof load === 'function') load();
+      if (typeof renderAll === 'function') renderAll();
+    } catch(e) { console.warn('reload 실패:', e); }
+  }
+
+  // save 함수 래핑 (호출 후 자동 클라우드 업로드)
+  if (typeof window.save === 'function') {
+    const _origSave = window.save;
+    window.save = function() {
+      const r = _origSave.apply(this, arguments);
+      if (window.LifeOSSync && LifeOSSync.isConfigured()) {
+        const raw = localStorage.getItem(STORAGE_KEY_LOCAL);
+        if (raw) {
+          try {
+            const data = JSON.parse(raw);
+            LifeOSSync.save(MODULE_KEY, data).catch(e => console.warn('sync 실패:', e));
+          } catch(e) {}
+        }
+      }
+      return r;
+    };
+  }
+
+  // 페이지 로드 시 자동 초기화 + 실시간 구독
+  (async () => {
+    if (!window.LifeOSSync) return;
+    if (!LifeOSSync.isConfigured()) return;
+
+    const r = await LifeOSSync.init();
+    if (!r.success) {
+      console.warn('[Sync] 초기화 실패:', r.reason);
+      return;
+    }
+
+    // 클라우드 최신 데이터 다운로드
+    try {
+      const cloud = await LifeOSSync.load(MODULE_KEY);
+      if (cloud && cloud.data != null) {
+        const localStr = localStorage.getItem(STORAGE_KEY_LOCAL);
+        const cloudStr = JSON.stringify(cloud.data);
+        if (localStr !== cloudStr) {
+          localStorage.setItem(STORAGE_KEY_LOCAL, cloudStr);
+          reloadAndRender();
+          console.log('[Sync] 클라우드 데이터 로드');
+        }
+      }
+    } catch(e) { console.warn('[Sync] 다운로드 실패:', e); }
+
+    // 실시간 구독: 다른 기기에서 변경되면 자동 반영
+    const myDevice = LifeOSSync.getDeviceLabel();
+    LifeOSSync.onChange(MODULE_KEY, (cloudData, meta) => {
+      if (cloudData == null) return;
+      if (meta.updatedBy === myDevice) return; // 자기 자신 무시
+
+      const localStr = localStorage.getItem(STORAGE_KEY_LOCAL);
+      const cloudStr = JSON.stringify(cloudData);
+      if (localStr === cloudStr) return; // 변경 없으면 무시
+
+      localStorage.setItem(STORAGE_KEY_LOCAL, cloudStr);
+      reloadAndRender();
+      safeToast(`🔄 다른 기기에서 업데이트됨 (${meta.updatedBy})`);
+    });
+
+    console.log('[Sync] kids 모듈 동기화 활성화');
+  })();
+})();
+
 </script>
 
 </body>
