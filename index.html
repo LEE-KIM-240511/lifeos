@@ -4,6 +4,16 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>우리집 라이프 OS</title>
+<!-- ============== PWA 설정 ============== -->
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#C65D3C">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="라이프OS">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
+<link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
+<!-- ====================================== -->
 <style>
 :root {
   --primary: #4F7CFF;
@@ -4651,5 +4661,30 @@ document.querySelectorAll('.svc-btn').forEach(btn => {
   });
 });
 </script>
+<!-- ============== PWA Service Worker 등록 ============== -->
+<script>
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('service-worker.js')
+        .then((reg) => {
+          console.log('[PWA] Service Worker 등록 성공:', reg.scope);
+          reg.addEventListener('updatefound', () => {
+            const newWorker = reg.installing;
+            if (newWorker) {
+              newWorker.addEventListener('statechange', () => {
+                if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                  console.log('[PWA] 새 버전 감지됨. 다음 방문 때 적용됩니다.');
+                }
+              });
+            }
+          });
+        })
+        .catch((err) => {
+          console.warn('[PWA] Service Worker 등록 실패:', err);
+        });
+    });
+  }
+</script>
+<!-- ===================================================== -->
 </body>
 </html>

@@ -1,0 +1,27 @@
+<!-- ============================================ -->
+<!-- Service Worker 등록 — </body> 직전에 추가 -->
+<!-- ============================================ -->
+<script>
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('service-worker.js')
+        .then((reg) => {
+          console.log('[PWA] Service Worker 등록 성공:', reg.scope);
+          // 새 버전 발견 시 자동 갱신
+          reg.addEventListener('updatefound', () => {
+            const newWorker = reg.installing;
+            if (newWorker) {
+              newWorker.addEventListener('statechange', () => {
+                if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                  console.log('[PWA] 새 버전 감지됨. 다음 방문 때 적용됩니다.');
+                }
+              });
+            }
+          });
+        })
+        .catch((err) => {
+          console.warn('[PWA] Service Worker 등록 실패:', err);
+        });
+    });
+  }
+</script>
