@@ -3637,20 +3637,28 @@ function initFCM() {
     fcmMessaging = firebase.messaging();
     
     // 포그라운드(앱 열려있을 때) 메시지 수신
-    fcmMessaging.onMessage((payload) => {
+    fcmMessaging.onMessage(async (payload) => {
       console.log('[FCM] 포그라운드 메시지:', payload);
       const notif = payload.notification || {};
       const data = payload.data || {};
       
-      // 페이지 열려있을 때는 시스템 알림 + 토스트 둘 다
+      // Service Worker를 통해 알림 표시 (모바일 PWA 호환)
       if (Notification.permission === 'granted') {
         try {
-          new Notification(notif.title || '🔔 라이프 OS', {
-            body: notif.body || data.body || '',
-            icon: 'icon-192.png',
-            tag: data.eventId || 'lifeos-fg',
-          });
-        } catch(e) {}
+          const reg = await navigator.serviceWorker.getRegistration('firebase-messaging-sw.js')
+                    || await navigator.serviceWorker.ready;
+          if (reg) {
+            await reg.showNotification(notif.title || '🔔 라이프 OS', {
+              body: notif.body || data.body || '',
+              icon: 'icon-192.png',
+              badge: 'icon-192.png',
+              tag: data.eventId || 'lifeos-fg-' + Date.now(),
+              data: { url: data.url || './index.html', ...data },
+            });
+          }
+        } catch(e) {
+          console.warn('[FCM] 포그라운드 알림 표시 실패:', e);
+        }
       }
       showToast('🔔 ' + (notif.title || notif.body || '알림 도착'));
     });
@@ -3908,21 +3916,33 @@ document.getElementById('notifSaveSettingsBtn').addEventListener('click', async 
   closeNotifSettingsModal();
 });
 
-// 테스트 알림 보내기 (로컬 알림 — 실제 FCM 푸시 흐름 테스트는 Functions 배포 후)
-document.getElementById('notifTestBtn').addEventListener('click', () => {
+// 테스트 알림 보내기 (Service Worker 경유 — 모바일 PWA 호환)
+document.getElementById('notifTestBtn').addEventListener('click', async () => {
   if (Notification.permission !== 'granted') {
     showToast('먼저 알림을 켜주세요');
     return;
   }
   try {
-    new Notification('🧪 테스트 알림', {
-      body: '라이프OS 알림이 잘 작동해요! 백그라운드 푸시는 서버 연동 후 가능합니다.',
+    // Service Worker registration 가져오기 (firebase-messaging-sw 우선)
+    let reg = await navigator.serviceWorker.getRegistration('firebase-messaging-sw.js');
+    if (!reg) {
+      reg = await navigator.serviceWorker.ready;
+    }
+    if (!reg) {
+      throw new Error('Service Worker가 활성화되지 않았어요');
+    }
+    await reg.showNotification('🧪 테스트 알림', {
+      body: '라이프OS 알림이 잘 작동해요! 자동 푸시는 서버 연동 후 가능합니다.',
       icon: 'icon-192.png',
-      tag: 'lifeos-test',
+      badge: 'icon-192.png',
+      tag: 'lifeos-test-' + Date.now(),
+      vibrate: [200, 100, 200],
+      data: { url: './index.html' },
     });
     showToast('🔔 테스트 알림 발송됨');
   } catch(e) {
-    showToast('알림 발송 실패: ' + e.message);
+    console.error('[Notif Test] 실패:', e);
+    showToast('알림 발송 실패: ' + (e.message || e.name || '알 수 없는 오류'));
   }
 });
 
