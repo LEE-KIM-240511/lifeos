@@ -1631,6 +1631,15 @@ body {
       </div>
       <div class="module-stat" id="statMaintenance">데이터 불러오는 중...</div>
     </a>
+
+    <a href="./library.html" class="module-card">
+      <div class="module-icon" style="background:#F5EDE0;color:#8B5A3C;">📚</div>
+      <div>
+        <div class="module-name">우리집 책방</div>
+        <div class="module-desc">가족 도서관 · 별점 추천 · 읽고싶음/읽는중/읽음 관리</div>
+      </div>
+      <div class="module-stat" id="statLibrary">데이터 불러오는 중...</div>
+    </a>
   </div>
 
   <!-- 데이터 백업/복원 + 가족 동기화 -->
@@ -2162,12 +2171,40 @@ function loadMaintenanceStats() {
   }
 }
 
+function loadLibraryStats() {
+  try {
+    const raw = localStorage.getItem('lifeos-library-v1');
+    if (!raw) {
+      document.getElementById('statLibrary').innerHTML = '첫 책을 추가해보세요 📚';
+      return;
+    }
+    const data = JSON.parse(raw);
+    const books = data.books || [];
+    if (books.length === 0) {
+      document.getElementById('statLibrary').innerHTML = '첫 책을 추가해보세요 📚';
+      return;
+    }
+    const reading = books.filter(b => b.status === 'reading').length;
+    const want = books.filter(b => b.status === 'want').length;
+    const done = books.filter(b => b.status === 'done').length;
+    const parts = [];
+    parts.push(`총 <strong>${books.length}</strong>권`);
+    if (reading > 0) parts.push(`📖 읽는중 <strong>${reading}</strong>`);
+    if (want > 0) parts.push(`⭐ 읽고싶음 <strong>${want}</strong>`);
+    if (done > 0) parts.push(`✅ 읽음 <strong>${done}</strong>`);
+    document.getElementById('statLibrary').innerHTML = parts.join(' · ');
+  } catch(e) {
+    document.getElementById('statLibrary').innerHTML = '데이터를 읽을 수 없어요';
+  }
+}
+
 loadGagebuStats();
 loadTravelStats();
 loadKidsStats();
 loadHomeStats();
 loadHealthStats();
 loadMaintenanceStats();
+loadLibraryStats();
 
 // ============================
 // 💾 데이터 백업 / 복원
