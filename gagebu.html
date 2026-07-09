@@ -1128,6 +1128,25 @@ tr:hover .trash-icon,.goal-card:hover .trash-icon{opacity:1;}
   </div>
 </div>
 
+<div class="modal-bg" id="modalInterest">
+  <div class="modal" style="max-width:420px;">
+    <h3>💰 이자입금</h3>
+    <p style="color:var(--text-secondary);font-size:12px;margin-bottom:14px;" id="interestAccountName"></p>
+    <div class="field"><label>발생 월</label><input type="month" id="interestMonth"></div>
+    <div class="field"><label>이 달 이자 금액 (원)</label>
+      <input id="interestAmount" placeholder="0" inputmode="numeric">
+      <div style="font-size:11px;color:var(--text-tertiary);margin-top:4px;">불입 없이 이자로 늘어난 금액. 통장에서 빠지지 않고 이 자산만 늘어나요.</div>
+    </div>
+    <div class="field"><label>메모 (선택)</label><input id="interestMemo" placeholder="예: 3월 예금이자"></div>
+    <div style="font-size:11px;color:var(--income);margin-bottom:6px;" id="interestHint"></div>
+    <div class="actions">
+      <button class="btn danger" id="btnClearInterest" style="margin-right:auto;display:none;">이 달 이자 삭제</button>
+      <button class="btn" onclick="closeModal('modalInterest')">취소</button>
+      <button class="btn primary" id="btnSaveInterest">저장</button>
+    </div>
+  </div>
+</div>
+
 <div class="modal-bg" id="modalGoal">
   <div class="modal">
     <h3 id="goalModalTitle">목적통장 추가</h3>
@@ -1758,7 +1777,20 @@ function getAccountBalanceForMonth(accId, year, month) {
     if (k > targetKey) return;
     accum += accountDelta(t, accId);
   });
+  // 이자입금 누적 (거래가 아닌 계좌 자체의 월별 이자 장부 — 통장은 안 건드리고 자산만 증가)
+  const interest = acc.interestByMonth || {};
+  Object.keys(interest).forEach(k => {
+    if (k < startKey) return;
+    if (k > targetKey) return;
+    accum += Number(interest[k]) || 0;
+  });
   return base + accum;
+}
+
+// 계좌의 누적 이자 (targetKey 월까지 합산)
+function accountInterestUpTo(acc, targetKey) {
+  const im = (acc && acc.interestByMonth) || {};
+  return Object.keys(im).reduce((s, k) => k <= targetKey ? s + (Number(im[k]) || 0) : s, 0);
 }
 
 // 사용자가 시작 잔액을 직접 입력. 항상 BALANCE_START_KEY(2026-01)에만 저장하고
@@ -3571,11 +3603,13 @@ function renderAccountCards(accounts, total, kind) {
       <div style="font-size:13px;color:var(--text-tertiary);">등록된 ${kind==='asset'?'자산':'부채'} 계좌가 없습니다</div>
     </div>`;
   }
+  const viewKey = monthKey(state.viewYear, state.viewMonth);
   return accounts.map(a => {
     const t = getAccountType(a.type);
     const bal = getAccountBalanceForMonth(a.id, state.viewYear, state.viewMonth);
     const pct = total > 0 ? (Math.abs(bal) / total) * 100 : 0;
     const valueColor = kind === 'asset' ? 'var(--income)' : 'var(--expense)';
+    const interestTotal = kind === 'asset' ? accountInterestUpTo(a, viewKey) : 0;
     return `<div class="card goal-card">
       <div class="flex items-center justify-between mb-3">
         <div style="flex:1;min-width:0;">
@@ -3586,6 +3620,7 @@ function renderAccountCards(accounts, total, kind) {
           <div class="g-sub">${t.label}${a.note?` · ${escapeHtml(a.note)}`:''}</div>
         </div>
         <div style="display:flex;gap:2px;">
+          ${kind === 'asset' ? `<button class="icon-btn trash-icon" onclick="openInterest('${a.id}')" title="이자입금">💰</button>` : ''}
           <button class="icon-btn trash-icon" onclick="editAccount('${a.id}')" title="수정">
             <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
           </button>
@@ -3595,6 +3630,7 @@ function renderAccountCards(accounts, total, kind) {
         </div>
       </div>
       <div class="num" style="font-size:22px;font-weight:700;letter-spacing:-0.03em;color:${valueColor};">${fmt(bal)}</div>
+      ${interestTotal ? `<div style="font-size:11px;color:var(--income);margin-top:3px;">💰 누적 이자 ${fmt(interestTotal)}</div>` : ''}
       <div class="g-bar"><div class="g-fill" style="width:${pct}%;background:${t.color};"></div></div>
       <div class="g-nums num"><span>전체 비중</span><span>${pct.toFixed(1)}%</span></div>
     </div>`;
@@ -4691,6 +4727,64 @@ document.getElementById('btnSaveAccount').addEventListener('click', async () => 
   closeModal('modalAccount');
   renderAll();
   toast('저장되었습니다');
+});
+
+/* ---------- 이자입금 (자산 이자 수익) ---------- */
+let interestAccId = null;
+window.openInterest = (accId) => {
+  const a = findAccount(accId); if (!a) return;
+  interestAccId = accId;
+  a.interestByMonth = a.interestByMonth || {};
+  document.getElementById('interestAccountName').textContent = `${a.name} · 이자로 늘어난 금액을 월별로 기록해요`;
+  document.getElementById('interestMonth').value = monthKey(state.viewYear, state.viewMonth);
+  loadInterestForMonth();
+  showModal('modalInterest');
+};
+function loadInterestForMonth() {
+  const a = findAccount(interestAccId); if (!a) return;
+  const mk = document.getElementById('interestMonth').value;
+  const cur = Number((a.interestByMonth || {})[mk]) || 0;
+  document.getElementById('interestAmount').value = cur ? cur.toLocaleString('ko-KR') : '';
+  document.getElementById('interestMemo').value = (a.interestMemoByMonth || {})[mk] || '';
+  document.getElementById('btnClearInterest').style.display = cur ? '' : 'none';
+  const total = accountInterestUpTo(a, monthKey(state.viewYear, state.viewMonth));
+  document.getElementById('interestHint').textContent = total ? `현재 보는 달까지 누적 이자: ${fmt(total)}` : '';
+}
+document.getElementById('interestMonth').addEventListener('change', loadInterestForMonth);
+document.getElementById('btnSaveInterest').addEventListener('click', async () => {
+  const a = findAccount(interestAccId); if (!a) return;
+  const mk = document.getElementById('interestMonth').value;
+  if (!mk) return toast('발생 월을 선택하세요');
+  const amt = parseNum(document.getElementById('interestAmount').value);
+  a.interestByMonth = a.interestByMonth || {};
+  a.interestMemoByMonth = a.interestMemoByMonth || {};
+  if (amt > 0) {
+    a.interestByMonth[mk] = amt;
+    a.interestMemoByMonth[mk] = document.getElementById('interestMemo').value.trim();
+  } else {
+    delete a.interestByMonth[mk];
+    delete a.interestMemoByMonth[mk];
+  }
+  const now = new Date();
+  a.balance = getAccountBalanceForMonth(a.id, now.getFullYear(), now.getMonth());
+  takeNetWorthSnapshot();
+  await saveData();
+  closeModal('modalInterest');
+  renderAll();
+  toast(amt > 0 ? '이자 기록 저장됨' : '이 달 이자 삭제됨');
+});
+document.getElementById('btnClearInterest').addEventListener('click', async () => {
+  const a = findAccount(interestAccId); if (!a) return;
+  const mk = document.getElementById('interestMonth').value;
+  if (a.interestByMonth) delete a.interestByMonth[mk];
+  if (a.interestMemoByMonth) delete a.interestMemoByMonth[mk];
+  const now = new Date();
+  a.balance = getAccountBalanceForMonth(a.id, now.getFullYear(), now.getMonth());
+  takeNetWorthSnapshot();
+  await saveData();
+  closeModal('modalInterest');
+  renderAll();
+  toast('이 달 이자 삭제됨');
 });
 
 // Recurring transaction modal
