@@ -5206,6 +5206,7 @@ const IMPORT_FIELDS = [
   { key:'memo',        label:'메모',         required:false, hints:['메모','내용','memo','description','적요','내역'] },
   { key:'fromAccount', label:'보내는 계좌',  required:false, hints:['보내는','출금','from','출금계좌'] },
   { key:'toAccount',   label:'받는 계좌',    required:false, hints:['받는','입금','to','입금계좌'] },
+  { key:'fixvar',      label:'지출구분',     required:false, hints:['지출구분','고정','변동','fixvar'] },
 ];
 
 let importState = {
@@ -5218,15 +5219,16 @@ let importState = {
 function downloadTemplate() {
   // SheetJS로 빈 템플릿 생성
   const data = [
-    ['날짜', '유형', '대분류', '소분류', '계좌', '결제수단', '메모', '금액', '보내는 계좌', '받는 계좌'],
-    ['2026-04-01', '수입', '월급', '남편월급', '주거래 통장', '', '4월 월급', 4500000, '', ''],
-    ['2026-04-02', '지출', '식비', '외식', '신용카드', '신용카드', '점심', 12000, '', ''],
-    ['2026-04-03', '저축', '예적금', '자유적금', '주거래 통장', '', '적금 자동이체', 300000, '', ''],
-    ['2026-04-05', '이체', '', '', '', '', '월급에서 적금으로', 1000000, '주거래 통장', '자유 예금'],
+    ['날짜', '유형', '대분류', '소분류', '계좌', '결제수단', '메모', '금액', '보내는 계좌', '받는 계좌', '지출구분'],
+    ['2026-04-01', '수입', '월급', '남편월급', '주거래 통장', '', '4월 월급', 4500000, '', '', ''],
+    ['2026-04-02', '지출', '식비', '외식', '신용카드', '신용카드', '점심', 12000, '', '', '변동'],
+    ['2026-04-10', '지출', '통신', '휴대폰', '신용카드', '신용카드', '핸드폰 요금', 55000, '', '', '고정'],
+    ['2026-04-03', '저축', '예적금', '자유적금', '주거래 통장', '', '적금 자동이체', 300000, '', '', ''],
+    ['2026-04-05', '이체', '', '', '', '', '월급에서 적금으로', 1000000, '주거래 통장', '자유 예금', ''],
   ];
   const ws = XLSX.utils.aoa_to_sheet(data);
   ws['!cols'] = [
-    {wch:12},{wch:8},{wch:12},{wch:12},{wch:14},{wch:12},{wch:20},{wch:12},{wch:14},{wch:14}
+    {wch:12},{wch:8},{wch:12},{wch:12},{wch:14},{wch:12},{wch:20},{wch:12},{wch:14},{wch:14},{wch:9}
   ];
   const wb = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb, ws, '거래내역');
@@ -5250,6 +5252,7 @@ function downloadTemplate() {
     ['메모', '선택', '자유 입력'],
     ['보내는 계좌', '이체시', '이체 유형일 때만 사용'],
     ['받는 계좌', '이체시', '이체 유형일 때만 사용'],
+    ['지출구분', '선택', '지출인 경우 고정 / 변동 입력 (비우면 카테고리로 자동 판정)'],
   ];
   const ws2 = XLSX.utils.aoa_to_sheet(readme);
   ws2['!cols'] = [{wch:14},{wch:8},{wch:50}];
@@ -5459,22 +5462,29 @@ function refreshImportPreview() {
       }
     }
 
-    parsed.push({
-      idx: i + 1,
-      raw, errors,
-      ok: errors.length === 0,
-      txn: {
-        id: uid(),
-        date: date || '',
-        type: type || '',
-        mainCat, subCat,
-        account, fromAccount, toAccount,
-        method,
-        memo: String(get('memo') || '').trim(),
-        amount,
-        tags: [],
-      },
-    });
+    // 지출구분 (고정/변동) — 지출만. t.fixed 불리언으로 저장(기존 배지·필터와 동일 체계).
+    // 값이 없으면 undefined → 카테고리 기반 자동판정(inferFixed)에 맡김.
+    let fixed;
+    if (type === 'expense') {
+      const fv = String(get('fixvar') || '').trim();
+      if (fv.includes('고정')) fixed = true;
+      else if (fv.includes('변동')) fixed = false;
+    }
+
+    const txn = {
+      id: uid(),
+      date: date || '',
+      type: type || '',
+      mainCat, subCat,
+      account, fromAccount, toAccount,
+      method,
+      memo: String(get('memo') || '').trim(),
+      amount,
+      tags: [],
+    };
+    if (typeof fixed === 'boolean') txn.fixed = fixed;
+
+    parsed.push({ idx: i + 1, raw, errors, ok: errors.length === 0, txn });
   });
   importState.parsedRows = parsed;
   renderImportPreview();
