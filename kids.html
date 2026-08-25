@@ -197,6 +197,65 @@ header{display:flex;align-items:center;justify-content:space-between;margin-bott
 .care-event button.icon-btn{background:none;border:none;cursor:pointer;padding:4px 6px;font-size:12px;color:var(--text-tertiary);}
 .care-event button.icon-btn:hover{color:var(--text);}
 .care-event.fever{background:#FEF2F2;border-color:#FECACA;}
+.care-status{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:12px;}
+.care-status-card{padding:10px 12px;border-radius:12px;border:1px solid var(--border);background:var(--card);text-align:center;}
+.care-status-card .st-lbl{font-size:11px;color:var(--text-secondary);margin-bottom:3px;}
+.care-status-card .st-val{font-size:15px;font-weight:700;letter-spacing:-0.02em;}
+.care-status-card .st-sub{font-size:10px;color:var(--text-tertiary);margin-top:2px;min-height:12px;}
+.care-status-card.live{background:#EEF2FF;border-color:#C7D2FE;}
+.care-status-card.live .st-val{color:#3730A3;}
+.care-snack{position:fixed;left:50%;bottom:80px;transform:translateX(-50%) translateY(20px);background:#1f2937;color:#fff;border-radius:12px;padding:10px 14px;font-size:13px;display:flex;align-items:center;gap:10px;box-shadow:0 6px 20px rgba(0,0,0,.25);opacity:0;pointer-events:none;transition:opacity .2s, transform .2s;z-index:1200;max-width:90vw;}
+.care-snack.show{opacity:1;transform:translateX(-50%) translateY(0);pointer-events:auto;}
+.care-snack button{background:#fff;color:#1f2937;border:none;border-radius:8px;padding:5px 12px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;flex-shrink:0;}
+/* 하루 일과표 (24h × 7일) */
+.daypat-filter{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px;}
+.daypat-chip{border:1px solid var(--border);background:var(--card);border-radius:999px;padding:5px 11px;font-size:12px;cursor:pointer;user-select:none;}
+.daypat-chip.off{opacity:0.38;}
+.daypat-wrap{position:relative;background:#0d0d0f;border-radius:12px;padding:12px 6px 8px;}
+.daypat-chart{position:relative;display:flex;gap:4px;padding:0 30px;}
+.daypat-col{position:relative;flex:1;border-left:1px solid #1a1a1a;}
+.daypat-grid{position:absolute;left:0;right:0;height:1px;background:#2a2a2a;}
+.daypat-hlabel{position:absolute;color:#777;font-size:10px;}
+.daypat-bar{position:absolute;cursor:pointer;}
+.daypat-bar.blk{left:10%;right:10%;border-radius:5px;opacity:.92;}
+.daypat-bar.blk:hover{outline:2px solid #fff;z-index:3;opacity:1;}
+.daypat-bar.ln{left:3%;right:3%;height:3px;border-radius:2px;}
+.daypat-bar.ln:hover{outline:2px solid #fff;height:4px;z-index:3;}
+.daypat-bar.ln .ln-emo{position:absolute;left:0;top:-8px;font-size:10px;line-height:1;}
+.daypat-bar.ico{left:50%;transform:translateX(-50%);font-size:14px;line-height:1;text-align:center;}
+.daypat-bar.ico:hover{transform:translateX(-50%) scale(1.25);z-index:3;}
+.daypat-days{display:flex;gap:4px;padding:6px 30px 0;color:#E8A24C;font-weight:700;font-size:11px;}
+.daypat-days > div{flex:1;text-align:center;}
+.daypat-tip{position:absolute;display:none;background:#fff;color:#222;border-radius:10px;padding:7px 10px;font-size:11.5px;line-height:1.4;box-shadow:0 4px 14px rgba(0,0,0,.4);pointer-events:none;z-index:6;white-space:nowrap;font-weight:600;}
+/* 베이비타임 스타일 풀스크린 입력 시트 */
+.bt-sheet{position:fixed;inset:0;background:#1a1a1c;color:#fff;z-index:1500;display:none;flex-direction:column;}
+.bt-sheet.show{display:flex;}
+.bt-sheet-head{display:flex;align-items:center;justify-content:space-between;padding:14px 16px;background:var(--accent,#F5A623);color:#fff;flex-shrink:0;}
+.bt-sheet-head .bt-x,.bt-sheet-head .bt-check{background:none;border:none;color:#fff;font-size:22px;line-height:1;cursor:pointer;padding:2px 6px;}
+.bt-sheet-head .bt-check{font-weight:800;}
+.bt-title{font-size:17px;font-weight:700;}
+.bt-sheet-body{flex:1;overflow-y:auto;padding:18px 18px 48px;-webkit-overflow-scrolling:touch;}
+.bt-seg{display:flex;gap:6px;flex-wrap:wrap;}
+.bt-seg button{flex:1;min-width:62px;padding:11px 6px;border-radius:10px;border:1px solid #3a3a3e;background:#26262a;color:#bbb;font-size:13px;font-family:inherit;cursor:pointer;}
+.bt-seg button.on{background:var(--accent,#F5A623);border-color:var(--accent,#F5A623);color:#fff;font-weight:700;}
+.bt-date{text-align:center;color:#aaa;font-size:13px;margin:18px 0 6px;}
+.bt-time-row{display:flex;align-items:baseline;justify-content:center;gap:12px;margin-bottom:8px;}
+.bt-time{font-size:42px;font-weight:800;color:var(--accent,#F5A623);letter-spacing:1px;}
+.bt-time-end{font-size:16px;color:#888;}
+.bt-chip{background:#26262a;border:1px solid #3a3a3e;color:#ddd;border-radius:8px;padding:6px 10px;font-size:12px;cursor:pointer;font-family:inherit;}
+.bt-range{width:100%;accent-color:var(--accent,#F5A623);margin:8px 0;height:24px;}
+.bt-sub{text-align:center;color:#bbb;font-size:13px;margin:6px 0;}
+.bt-stepper{display:flex;gap:8px;justify-content:center;}
+.bt-stepper button{background:#26262a;border:1px solid #3a3a3e;color:#ddd;border-radius:8px;padding:8px 14px;font-size:13px;cursor:pointer;font-family:inherit;}
+.bt-block{border-top:1px solid #2c2c30;padding-top:16px;margin-top:18px;}
+.bt-block-label{font-size:13px;color:#aaa;margin-bottom:12px;display:flex;justify-content:space-between;align-items:center;}
+.bt-big-num{text-align:center;font-size:36px;font-weight:800;color:var(--accent,#F5A623);margin-bottom:6px;}
+.bt-big-num small{font-size:16px;color:#888;font-weight:600;}
+.bt-tags{display:flex;flex-wrap:wrap;gap:8px;}
+.bt-tag{background:#26262a;border:1px solid #3a3a3e;color:#ccc;border-radius:999px;padding:7px 13px;font-size:13px;cursor:pointer;font-family:inherit;}
+.bt-tag.on{background:#3a2e12;border-color:var(--accent,#F5A623);color:var(--accent,#F5A623);font-weight:700;}
+.bt-memo{width:100%;background:#26262a;border:1px solid #3a3a3e;border-radius:10px;color:#fff;padding:12px;font-family:inherit;font-size:14px;min-height:70px;resize:vertical;box-sizing:border-box;}
+.bt-delete{display:block;width:100%;text-align:center;background:none;border:none;color:#ff6b6b;font-size:14px;padding:20px;cursor:pointer;font-family:inherit;margin-top:8px;}
 
 @media (max-width: 600px) {
   .care-quick{grid-template-columns:repeat(5,1fr);gap:6px;}
@@ -279,6 +338,7 @@ header{display:flex;align-items:center;justify-content:space-between;margin-bott
   </div>
 
   <div class="section-tabs">
+    <button class="section-tab" data-section="guide">📋 할일·가이드</button>
     <button class="section-tab active" data-section="diary">📔 일기</button>
     <button class="section-tab" data-section="growth">📏 성장</button>
     <button class="section-tab" data-section="care">🍼 신생아 케어</button>
@@ -288,6 +348,30 @@ header{display:flex;align-items:center;justify-content:space-between;margin-bott
     <button class="section-tab" data-section="milestone">🌟 마일스톤</button>
     <button class="section-tab" data-section="shopping">🛒 육아용품</button>
     <button class="section-tab" data-section="info">ℹ️ 자녀 정보</button>
+  </div>
+
+  <!-- 할일·가이드 섹션 -->
+  <div class="section-pane" id="section-guide">
+    <!-- 출생 후 행정업무 체크리스트 -->
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+      <div>
+        <h2 style="font-size:15px;">📋 태어나면 해야 할 일</h2>
+        <div style="font-size:11.5px;color:var(--text-tertiary);margin-top:2px;">출생 후 행정업무 · 완료하면 체크 (지역·상황따라 다를 수 있어요)</div>
+      </div>
+    </div>
+    <div id="adminProgress" style="margin-bottom:10px;"></div>
+    <div id="adminChecklist"></div>
+    <div style="display:flex;gap:6px;margin:10px 0 24px;">
+      <input id="adminNewTask" placeholder="할 일 직접 추가" style="flex:1;">
+      <button class="btn small primary" id="btnAddAdminTask">+ 추가</button>
+    </div>
+
+    <!-- 월령별 가이드 -->
+    <div style="margin-bottom:8px;">
+      <h2 style="font-size:15px;">🌱 월령별 성장·놀이·수유 가이드</h2>
+      <div style="font-size:11.5px;color:var(--text-tertiary);margin-top:2px;" id="ageGuideSub">지금 우리 아기 시기를 강조해서 보여줘요 (일반 참고용)</div>
+    </div>
+    <div id="ageGuide"></div>
   </div>
 
   <div class="section-pane active" id="section-diary">
@@ -330,6 +414,9 @@ header{display:flex;align-items:center;justify-content:space-between;margin-bott
 
   <!-- 신생아 케어 섹션 -->
   <div class="section-pane" id="section-care">
+    <!-- 마지막 기록 경과 상태 띠 -->
+    <div class="care-status" id="careStatus"></div>
+
     <!-- 오늘 요약 카드 -->
     <div class="care-summary" id="careSummary"></div>
 
@@ -403,8 +490,8 @@ header{display:flex;align-items:center;justify-content:space-between;margin-bott
   <div class="section-pane" id="section-vaccine">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
       <div>
-        <h2 style="font-size:15px;">💉 예방접종</h2>
-        <div style="font-size:11.5px;color:var(--text-tertiary);margin-top:2px;">한국 표준예방접종 일정 자동 등록 · 완료 체크 가능</div>
+        <h2 style="font-size:15px;">💉 예방접종 · 🩺 영유아 검진</h2>
+        <div style="font-size:11.5px;color:var(--text-tertiary);margin-top:2px;">표준예방접종 + 국가 영유아 건강검진(8차)·구강검진(3차) 자동 등록 · 완료 체크</div>
       </div>
       <div style="display:flex;gap:8px;">
         <button class="btn small" id="btnAutoVaccine">📋 표준 일정 자동 등록</button>
@@ -432,6 +519,17 @@ header{display:flex;align-items:center;justify-content:space-between;margin-bott
     <div style="margin-bottom:14px;">
       <h2 style="font-size:15px;">📊 패턴 차트</h2>
       <div style="font-size:11.5px;color:var(--text-tertiary);margin-top:2px;">최근 7일간의 수유/수면/체온 추이</div>
+    </div>
+    <div class="card" style="margin-bottom:14px;">
+      <h3 style="font-size:13px;margin-bottom:10px;">🕐 하루 일과표 (최근 7일)</h3>
+      <div style="font-size:11px;color:var(--text-tertiary);margin:-6px 0 10px;">막대에 마우스를 올리거나(모바일은 탭) 상세가 떠요 · 위 칩으로 항목 끄기/켜기</div>
+      <div class="daypat-filter" id="dayPatternFilter"></div>
+      <div class="daypat-wrap">
+        <div class="daypat-chart" id="dayPatternChart"></div>
+        <div class="daypat-days" id="dayPatternDays"></div>
+        <div class="daypat-tip" id="dayPatternTip"></div>
+      </div>
+      <div id="dayPatternEmpty" style="display:none;text-align:center;padding:18px;color:var(--text-tertiary);font-size:12px;">아직 기록이 없습니다</div>
     </div>
     <div class="card" style="margin-bottom:14px;">
       <h3 style="font-size:13px;margin-bottom:10px;">🍼 일별 수유 횟수 / 양</h3>
@@ -518,39 +616,40 @@ header{display:flex;align-items:center;justify-content:space-between;margin-bott
   <img id="lightboxImg" class="lightbox-img" src="" />
 </div>
 
-<!-- 기저귀 모달 -->
-<div class="modal-bg" id="modalDiaper">
-  <div class="modal" style="max-width:420px;">
-    <h3 id="diaperModalTitle">기저귀 기록</h3>
-    <div class="field"><label>시간</label><input type="datetime-local" id="diaperDt"></div>
-    <div class="field">
-      <label>종류</label>
-      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;">
-        <label class="seg-opt"><input type="radio" name="diaperType" value="pee" checked><span>💧 소변</span></label>
-        <label class="seg-opt"><input type="radio" name="diaperType" value="poo"><span>💩 대변</span></label>
-        <label class="seg-opt"><input type="radio" name="diaperType" value="both"><span>💧💩 둘 다</span></label>
-      </div>
+<!-- 기저귀 입력 시트 (풀스크린) -->
+<div class="bt-sheet" id="sheetDiaper" style="--accent:#3FB984;">
+  <div class="bt-sheet-head">
+    <button class="bt-x" type="button" onclick="closeDiaperSheet()">✕</button>
+    <div class="bt-title" id="diaperSheetTitle">기저귀</div>
+    <button class="bt-check" type="button" id="diaperSheetSave">✓</button>
+  </div>
+  <div class="bt-sheet-body">
+    <div class="bt-seg" id="diaperTypeSeg">
+      <button type="button" data-dt="pee">💧 소변</button>
+      <button type="button" data-dt="poo">💩 대변</button>
+      <button type="button" data-dt="both">💧💩 둘 다</button>
     </div>
-    <div class="field" id="diaperColorField">
-      <label>대변 상태 (선택)</label>
-      <select id="diaperColor">
-        <option value="">선택 안 함</option>
-        <option value="yellow">노란색 (정상 모유)</option>
-        <option value="green">초록색</option>
-        <option value="brown">갈색 (이유식 시작 후 정상)</option>
-        <option value="dark">짙은색 (태변)</option>
-        <option value="watery">묽음/물설사</option>
-        <option value="hard">단단함</option>
-        <option value="red">붉은색 (의사 상담!)</option>
-        <option value="white">흰색 (의사 상담!)</option>
-      </select>
+
+    <div class="bt-date" id="diaperDateLabel"></div>
+    <div class="bt-time-row">
+      <button class="bt-chip" type="button" id="diaperMinus1h">−1h</button>
+      <div class="bt-time" id="diaperTimeBig">--:--</div>
+      <button class="bt-chip" type="button" id="diaperPlus1h">+1h</button>
     </div>
-    <div class="field"><label>메모 (선택)</label><input id="diaperMemo" placeholder="예: 양 많음, 발진 있음"></div>
-    <div class="actions">
-      <button class="btn danger" id="btnDeleteDiaper" style="margin-right:auto;display:none;">삭제</button>
-      <button class="btn" onclick="closeModal('modalDiaper')">취소</button>
-      <button class="btn primary" id="btnSaveDiaper">저장</button>
+    <input type="range" class="bt-range" id="diaperTimeRange" min="-60" max="60" step="1" value="0">
+    <div class="bt-sub" style="font-size:11px;color:#777;">슬라이더로 분 단위 · −1h/+1h 버튼으로 1시간씩</div>
+
+    <div class="bt-block" id="diaperColorBlock">
+      <div class="bt-block-label">대변 상태 (선택)</div>
+      <div class="bt-tags" id="diaperColorTags"></div>
     </div>
+
+    <div class="bt-block">
+      <div class="bt-block-label">메모</div>
+      <textarea class="bt-memo" id="diaperMemoPro" placeholder="예: 양 많음, 발진 있음"></textarea>
+    </div>
+
+    <button class="bt-delete" type="button" id="diaperSheetDelete" style="display:none;">기록 삭제</button>
   </div>
 </div>
 
@@ -632,42 +731,64 @@ header{display:flex;align-items:center;justify-content:space-between;margin-bott
   </div>
 </div>
 
-<!-- 수유 모달 -->
-<div class="modal-bg" id="modalFeeding">
-  <div class="modal">
-    <h3 id="feedingModalTitle">🍼 수유 기록</h3>
-    <div class="field-row">
-      <div class="field"><label>날짜</label><input type="date" id="feedingDate"></div>
-      <div class="field"><label>시간</label><input type="time" id="feedingTime"></div>
+<!-- 수유 입력 시트 (풀스크린) -->
+<div class="bt-sheet" id="sheetFeeding" style="--accent:#F5A623;">
+  <div class="bt-sheet-head">
+    <button class="bt-x" type="button" onclick="closeFeedingSheet()">✕</button>
+    <div class="bt-title" id="feedSheetTitle">수유</div>
+    <button class="bt-check" type="button" id="feedSheetSave">✓</button>
+  </div>
+  <div class="bt-sheet-body">
+    <div class="bt-seg" id="feedTypeSeg">
+      <button type="button" data-ft="breast">🤱 모유</button>
+      <button type="button" data-ft="formula">🍼 분유</button>
+      <button type="button" data-ft="mixed">🍼🤱 혼합</button>
+      <button type="button" data-ft="solid">🥄 이유식</button>
     </div>
-    <div class="field">
-      <label>종류</label>
-      <select id="feedingType">
-        <option value="breast">🤱 모유</option>
-        <option value="formula">🍼 분유</option>
-        <option value="mixed">🍼🤱 혼합</option>
-        <option value="solid">🥄 이유식</option>
-      </select>
+
+    <div class="bt-date" id="feedDateLabel"></div>
+    <div class="bt-time-row">
+      <button class="bt-chip" type="button" id="feedMinus1h">−1h</button>
+      <div class="bt-time" id="feedTimeBig">--:--</div>
+      <div class="bt-time-end" id="feedTimeEnd"></div>
+      <button class="bt-chip" type="button" id="feedPlus1h">+1h</button>
     </div>
-    <div class="field" id="feedingSideField">
-      <label>모유 방향</label>
-      <select id="feedingSide">
-        <option value="">선택 안함</option>
-        <option value="left">왼쪽</option>
-        <option value="right">오른쪽</option>
-        <option value="both">양쪽</option>
-      </select>
+    <input type="range" class="bt-range" id="feedTimeRange" min="-60" max="60" step="1" value="0">
+    <div class="bt-sub" style="font-size:11px;color:#777;">슬라이더로 분 단위 · −1h/+1h 버튼으로 1시간씩</div>
+
+    <div class="bt-block" id="feedSideBlock">
+      <div class="bt-block-label">모유 방향 · 수유 시간</div>
+      <div class="bt-seg" id="feedSideSeg">
+        <button type="button" data-side="left">왼쪽</button>
+        <button type="button" data-side="right">오른쪽</button>
+        <button type="button" data-side="both">양쪽</button>
+      </div>
+      <div class="bt-sub">수유 시간 : <span id="feedDurLabel">0분</span></div>
+      <div class="bt-stepper">
+        <button type="button" data-dur="-5">−5분</button>
+        <button type="button" data-dur="-1">−1분</button>
+        <button type="button" data-dur="1">＋1분</button>
+        <button type="button" data-dur="5">＋5분</button>
+      </div>
     </div>
-    <div class="field-row">
-      <div class="field"><label>양 (mL, 선택)</label><input type="number" id="feedingAmount" placeholder="예: 120" inputmode="numeric"></div>
-      <div class="field"><label>지속시간 (분, 선택)</label><input type="number" id="feedingDuration" placeholder="예: 15" inputmode="numeric"></div>
+
+    <div class="bt-block" id="feedAmtBlock">
+      <div class="bt-block-label">먹은 양</div>
+      <div class="bt-big-num"><span id="feedAmtBig">0</span> <small>ml</small></div>
+      <input type="range" class="bt-range" id="feedAmtRange" min="0" max="240" step="5" value="0">
     </div>
-    <div class="field"><label>메모 (선택)</label><textarea id="feedingMemo" placeholder="잘 먹었음 / 토함 등"></textarea></div>
-    <div class="actions">
-      <button class="btn danger" id="btnDeleteFeeding" style="margin-right:auto;display:none;">삭제</button>
-      <button class="btn" onclick="closeModal('modalFeeding')">취소</button>
-      <button class="btn primary" id="btnSaveFeeding">저장</button>
+
+    <div class="bt-block">
+      <div class="bt-block-label"><span>태그</span></div>
+      <div class="bt-tags" id="feedTags"></div>
     </div>
+
+    <div class="bt-block">
+      <div class="bt-block-label">메모</div>
+      <textarea class="bt-memo" id="feedMemoPro" placeholder="이곳을 터치하여 메모를 입력하세요"></textarea>
+    </div>
+
+    <button class="bt-delete" type="button" id="feedSheetDelete" style="display:none;">기록 삭제</button>
   </div>
 </div>
 
@@ -875,6 +996,7 @@ header{display:flex;align-items:center;justify-content:space-between;margin-bott
 </div>
 
 <div class="toast" id="toast"></div>
+<div class="care-snack" id="careSnack"></div>
 
 <script>
 const STORAGE_KEY = 'lifeos-kids-v1';
@@ -891,6 +1013,7 @@ let state = {
   vaccinations: [],  // 예방접종: {id, kidId, vaccineId, scheduledDate, completedDate, hospital, memo}
   visits: [],        // 진료: {id, kidId, date, hospital, doctor, reason, diagnosis, memo}
   pregnancy: [],     // 임신/태교: {id, kidId, date, kind: 'kick'|'checkup'|'diary'|'photo', text, weeks, weight, memo}
+  checklist: {},     // 행정업무 체크: { [kidId]: { done: {taskId:true}, custom: [{id,title}] } }
   currentKidId: null, currentSection: 'diary',
   careSubTab: 'today',
   careDate: null,
@@ -948,6 +1071,7 @@ function save() {
     shopping: state.shopping,
     shoppingCategories: state.shoppingCategories,
     vaccinations: state.vaccinations, visits: state.visits, pregnancy: state.pregnancy,
+    checklist: state.checklist,
   }));
 }
 function load() {
@@ -970,6 +1094,7 @@ function load() {
     if (p.vaccinations) state.vaccinations = p.vaccinations;
     if (p.visits) state.visits = p.visits;
     if (p.pregnancy) state.pregnancy = p.pregnancy;
+    if (p.checklist) state.checklist = p.checklist;
   } catch(e){}
   // 마이그레이션: 분류 데이터가 비어있으면 기본값으로 시드
   if (!state.shoppingCategories || state.shoppingCategories.length === 0) {
@@ -1105,7 +1230,8 @@ function renderBanner() {
 }
 
 function renderSectionContent() {
-  if (state.currentSection === 'diary') renderDiary();
+  if (state.currentSection === 'guide') renderGuide();
+  else if (state.currentSection === 'diary') renderDiary();
   else if (state.currentSection === 'growth') renderGrowth();
   else if (state.currentSection === 'care') renderCare();
   else if (state.currentSection === 'vaccine') renderVaccine();
@@ -2238,8 +2364,53 @@ function kidDiapers(kidId, dateStr) {
 function renderCare() {
   const k = getKid(); if (!k) return;
   renderCareDateLabel();
+  renderCareStatus();
   renderCareSummary();
   renderCareTimeline();
+}
+
+// 마지막 기록 경과 상태 띠 (마지막 수유 / 기저귀 / 수면)
+function renderCareStatus() {
+  const k = getKid();
+  const el = document.getElementById('careStatus');
+  if (!el) return;
+  if (!k) { el.innerHTML = ''; return; }
+  const agoStr = (iso) => {
+    const d = parseDt(iso); if (!d) return null;
+    let ms = Date.now() - d.getTime(); if (ms < 0) ms = 0;
+    const m = Math.round(ms / 60000);
+    if (m < 1) return '방금';
+    if (m < 60) return `${m}분 전`;
+    const h = Math.floor(m / 60), mm = m % 60;
+    return mm ? `${h}시간 ${mm}분 전` : `${h}시간 전`;
+  };
+  const fs = state.feedings.filter(f => f.kidId === k.id && f.datetime).sort((a, b) => b.datetime.localeCompare(a.datetime));
+  const ds = state.diapers.filter(x => x.kidId === k.id && x.datetime).sort((a, b) => b.datetime.localeCompare(a.datetime));
+  const ss = state.sleeps.filter(x => x.kidId === k.id && x.startTime).sort((a, b) => b.startTime.localeCompare(a.startTime));
+  // 수유 직전 간격
+  let feedSub = '';
+  if (fs.length >= 2) {
+    const m = Math.round((parseDt(fs[0].datetime) - parseDt(fs[1].datetime)) / 60000);
+    feedSub = m < 60 ? `간격 ${m}분` : `간격 ${Math.floor(m / 60)}시간 ${m % 60}분`;
+  }
+  // 수면 상태 (진행 중이면 "자는 중")
+  const open = ss.find(s => !s.endTime);
+  let sleepVal, sleepSub, live = '';
+  if (open) { sleepVal = '자는 중'; sleepSub = `${fmtTime(parseDt(open.startTime))}~`; live = ' live'; }
+  else if (ss.length) { sleepVal = (agoStr(ss[0].endTime || ss[0].startTime) || '-') + ' 깸'; sleepSub = ''; }
+  else { sleepVal = '기록 없음'; sleepSub = ''; }
+
+  el.innerHTML = `
+    <div class="care-status-card"><div class="st-lbl">🍼 마지막 수유</div><div class="st-val">${fs.length ? agoStr(fs[0].datetime) : '기록 없음'}</div><div class="st-sub">${feedSub}</div></div>
+    <div class="care-status-card"><div class="st-lbl">💩 마지막 기저귀</div><div class="st-val">${ds.length ? agoStr(ds[0].datetime) : '기록 없음'}</div><div class="st-sub"></div></div>
+    <div class="care-status-card${live}"><div class="st-lbl">😴 수면</div><div class="st-val">${sleepVal}</div><div class="st-sub">${sleepSub}</div></div>
+  `;
+  // 수면 빠른버튼 라벨 토글 (자는 중이면 "기상")
+  const sBtn = document.querySelector('.care-btn[data-care-add="sleep"]');
+  if (sBtn) {
+    sBtn.querySelector('.emoji').textContent = open ? '🌅' : '😴';
+    sBtn.querySelector('.lbl').textContent = open ? '기상' : '수면';
+  }
 }
 
 function renderCareDateLabel() {
@@ -2436,71 +2607,148 @@ window.editCare = (kind, id) => {
   else if (kind === 'diaper') openDiaper(id);
 };
 
-// 빠른 입력 버튼
+// 빠른 기록 시각 (now → datetime-local 형식)
+function careNowDt() {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}T${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
+}
+
+// 편집 스낵바 ("✓ 기록됨 · 수정")
+let careSnackTimer;
+function showCareSnack(msg, kind, id) {
+  const el = document.getElementById('careSnack'); if (!el) return;
+  el.innerHTML = `<span>${msg}</span><button type="button" onclick="window.editCare('${kind}','${id}');window.hideCareSnack();">수정</button>`;
+  el.classList.add('show');
+  clearTimeout(careSnackTimer);
+  careSnackTimer = setTimeout(window.hideCareSnack, 4500);
+}
+window.hideCareSnack = function() { const el = document.getElementById('careSnack'); if (el) el.classList.remove('show'); };
+
+// 빠른 탭 = 즉시 기록 (B 방식). 체온·약물은 값 입력이 필요해 모달을 연다.
+function quickLogCare(type) {
+  const k = getKid();
+  if (!k) { toast('먼저 자녀를 추가하세요'); return; }
+  state.careDate = isoDate(new Date()); // 오늘로 이동해 방금 기록이 보이게
+  const now = careNowDt();
+  if (type === 'feeding') {
+    const id = uid();
+    state.feedings.push({ id, kidId: k.id, datetime: now, type: 'breast', side: '', amount: '', durationMin: '', memo: '' });
+    save(); renderCare(); showCareSnack('🍼 수유 기록됨', 'feeding', id);
+  } else if (type === 'diaper') {
+    const id = uid();
+    state.diapers.push({ id, kidId: k.id, datetime: now, type: 'pee', color: '', memo: '' });
+    save(); renderCare(); showCareSnack('💧 기저귀 기록됨', 'diaper', id);
+  } else if (type === 'bath') {
+    const id = uid();
+    state.baths.push({ id, kidId: k.id, datetime: now, bathType: 'tub', memo: '' });
+    save(); renderCare(); showCareSnack('🛁 목욕 기록됨', 'bath', id);
+  } else if (type === 'sleep') {
+    // 잠듦 ↔ 깸 토글: 종료 미입력 수면이 있으면 종료 처리
+    const open = state.sleeps
+      .filter(s => s.kidId === k.id && s.startTime && !s.endTime)
+      .sort((a, b) => (b.startTime || '').localeCompare(a.startTime || ''))[0];
+    if (open) {
+      open.endTime = now;
+      const dur = parseDt(open.endTime) - parseDt(open.startTime);
+      save(); renderCare(); showCareSnack(`🌅 기상 · 잔 시간 ${fmtDuration(Math.max(dur, 0))}`, 'sleep', open.id);
+    } else {
+      const id = uid();
+      state.sleeps.push({ id, kidId: k.id, startTime: now, endTime: '', type: 'auto', memo: '' });
+      save(); renderCare(); showCareSnack('😴 잠듦 — 깨면 수면 버튼 다시 탭', 'sleep', id);
+    }
+  }
+}
+
+// 빠른 입력 버튼:
+//  · 수유·기저귀 → 상세 입력창 즉시 열기 (ml / 소변·대변 등 바로 입력)
+//  · 수면 → 잠듦 ↔ 깸 토글 (즉시 기록)
+//  · 목욕 → 즉시 기록
+//  · 체온·약물 → 모달
 document.querySelectorAll('.care-btn').forEach(btn => {
   btn.addEventListener('click', () => {
     const t = btn.dataset.careAdd;
     if (t === 'feeding') openFeeding();
-    else if (t === 'sleep') openSleep();
+    else if (t === 'diaper') openDiaper();
+    else if (t === 'sleep') quickLogCare('sleep');
+    else if (t === 'bath') quickLogCare('bath');
     else if (t === 'temp') openTemp();
     else if (t === 'med') openMed();
-    else if (t === 'bath') openBath();
-    else if (t === 'diaper') openDiaper();
   });
 });
 
-// ============= 기저귀 모달 =============
+// 케어 화면이 켜져 있는 동안 "마지막 N분 전"을 1분마다 갱신
+setInterval(() => { if (state.currentSection === 'care' && getKid()) renderCareStatus(); }, 60000);
+
+// ============= 기저귀 입력 시트 (베이비타임 스타일) =============
+let diaperSheetState = null;
+const DIAPER_COLORS = [
+  {v:'yellow',l:'노란색(정상)'},{v:'green',l:'초록색'},{v:'brown',l:'갈색'},
+  {v:'dark',l:'짙은색(태변)'},{v:'watery',l:'묽음/물설사'},{v:'hard',l:'단단함'},
+  {v:'red',l:'⚠️붉은색'},{v:'white',l:'⚠️흰색'},
+];
 function openDiaper(id) {
-  state.editingDiaperId = id || null;
-  const fmtNow = () => {
-    const d = new Date();
-    return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}T${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
+  const k = getKid(); if (!k) { toast('먼저 자녀를 추가하세요'); return; }
+  const ex = id ? state.diapers.find(d => d.id === id) : null;
+  let dt;
+  if (ex) dt = parseDt(ex.datetime);
+  else if (state.careDate) { dt = new Date(state.careDate); const n = new Date(); dt.setHours(n.getHours(), n.getMinutes(), 0, 0); }
+  else dt = new Date();
+  diaperSheetState = {
+    editId: ex ? ex.id : null,
+    base: new Date(dt.getTime()),
+    start: new Date(dt.getTime()),
+    type: ex?.type || 'pee',
+    color: ex?.color || '',
   };
-  if (id) {
-    const item = state.diapers.find(d => d.id === id);
-    if (!item) return;
-    document.getElementById('diaperModalTitle').textContent = '기저귀 기록 수정';
-    document.getElementById('diaperDt').value = (item.datetime || '').slice(0,16);
-    document.querySelector(`input[name="diaperType"][value="${item.type || 'pee'}"]`).checked = true;
-    document.getElementById('diaperColor').value = item.color || '';
-    document.getElementById('diaperMemo').value = item.memo || '';
-    document.getElementById('btnDeleteDiaper').style.display = '';
-  } else {
-    document.getElementById('diaperModalTitle').textContent = '기저귀 기록';
-    document.getElementById('diaperDt').value = fmtNow();
-    document.querySelector('input[name="diaperType"][value="pee"]').checked = true;
-    document.getElementById('diaperColor').value = '';
-    document.getElementById('diaperMemo').value = '';
-    document.getElementById('btnDeleteDiaper').style.display = 'none';
-  }
-  showModal('modalDiaper');
+  document.getElementById('diaperSheetTitle').textContent = ex ? '기저귀 수정' : '기저귀';
+  document.getElementById('diaperSheetDelete').style.display = ex ? '' : 'none';
+  document.getElementById('diaperTimeRange').value = 0;
+  document.getElementById('diaperMemoPro').value = ex?.memo || '';
+  renderDiaperColors();
+  refreshDiaperSheet();
+  document.getElementById('sheetDiaper').classList.add('show');
 }
+window.closeDiaperSheet = () => document.getElementById('sheetDiaper').classList.remove('show');
 
-document.getElementById('btnSaveDiaper').addEventListener('click', () => {
-  const dt = document.getElementById('diaperDt').value;
-  if (!dt) return toast('시간을 선택해주세요');
-  const type = document.querySelector('input[name="diaperType"]:checked')?.value || 'pee';
-  const color = document.getElementById('diaperColor').value || '';
-  const memo = document.getElementById('diaperMemo').value.trim();
-
-  if (state.editingDiaperId) {
-    const d = state.diapers.find(x => x.id === state.editingDiaperId);
-    if (d) Object.assign(d, { datetime: dt, type, color, memo });
-  } else {
-    state.diapers.push({
-      id: uid(), kidId: state.currentKidId,
-      datetime: dt, type, color, memo,
-    });
-  }
-  save(); renderAll(); closeModal('modalDiaper');
-  toast('저장되었습니다');
+function refreshDiaperSheet() {
+  const s = diaperSheetState; if (!s) return;
+  document.querySelectorAll('#diaperTypeSeg button').forEach(b => b.classList.toggle('on', b.dataset.dt === s.type));
+  document.getElementById('diaperDateLabel').textContent = `${s.start.getMonth()+1}월 ${s.start.getDate()}일`;
+  document.getElementById('diaperTimeBig').textContent = fmtTime(s.start);
+  const showColor = s.type === 'poo' || s.type === 'both';
+  document.getElementById('diaperColorBlock').style.display = showColor ? '' : 'none';
+}
+function renderDiaperColors() {
+  const wrap = document.getElementById('diaperColorTags'); if (!wrap) return; wrap.innerHTML = '';
+  DIAPER_COLORS.forEach(c => {
+    const b = document.createElement('button'); b.type = 'button';
+    b.className = 'bt-tag' + (diaperSheetState.color === c.v ? ' on' : ''); b.textContent = c.l;
+    b.onclick = () => { diaperSheetState.color = diaperSheetState.color === c.v ? '' : c.v; renderDiaperColors(); };
+    wrap.appendChild(b);
+  });
+}
+document.querySelectorAll('#diaperTypeSeg button').forEach(b => b.addEventListener('click', () => { diaperSheetState.type = b.dataset.dt; refreshDiaperSheet(); }));
+document.getElementById('diaperTimeRange').addEventListener('input', (e) => { const v = parseInt(e.target.value) || 0; diaperSheetState.start = new Date(diaperSheetState.base.getTime() + v*60000); refreshDiaperSheet(); });
+function shiftDiaperBase(min) {
+  diaperSheetState.base = new Date(diaperSheetState.base.getTime() + min*60000);
+  const v = parseInt(document.getElementById('diaperTimeRange').value) || 0;
+  diaperSheetState.start = new Date(diaperSheetState.base.getTime() + v*60000);
+  refreshDiaperSheet();
+}
+document.getElementById('diaperMinus1h').addEventListener('click', () => shiftDiaperBase(-60));
+document.getElementById('diaperPlus1h').addEventListener('click', () => shiftDiaperBase(60));
+document.getElementById('diaperSheetSave').addEventListener('click', () => {
+  const k = getKid(); const s = diaperSheetState; if (!k || !s) return;
+  const showColor = s.type === 'poo' || s.type === 'both';
+  const data = { kidId: k.id, datetime: dtIso(s.start), type: s.type, color: showColor ? (s.color || '') : '', memo: document.getElementById('diaperMemoPro').value.trim() };
+  if (s.editId) { const d = state.diapers.find(x => x.id === s.editId); if (d) Object.assign(d, data); }
+  else state.diapers.push({ id: uid(), ...data });
+  save(); closeDiaperSheet(); renderCare(); toast('기저귀 기록 저장됨');
 });
-
-document.getElementById('btnDeleteDiaper').addEventListener('click', () => {
-  if (!state.editingDiaperId) return;
-  state.diapers = state.diapers.filter(d => d.id !== state.editingDiaperId);
-  save(); renderAll(); closeModal('modalDiaper');
-  toast('삭제되었습니다');
+document.getElementById('diaperSheetDelete').addEventListener('click', () => {
+  const s = diaperSheetState; if (!s || !s.editId) return;
+  state.diapers = state.diapers.filter(d => d.id !== s.editId);
+  save(); closeDiaperSheet(); renderCare(); toast('삭제되었습니다');
 });
 
 // 날짜 네비게이션
@@ -2516,62 +2764,105 @@ document.getElementById('careDateToday').addEventListener('click', () => {
   state.careDate = null; renderCare();
 });
 
-/* ===== 수유 ===== */
+/* ===== 수유 입력 시트 (베이비타임 스타일) ===== */
+let feedSheetState = null;
+const FEED_TAGS = ['유산균','비타민C','초유밀','트림 함','잘 먹음','토함','보챔'];
+
 function openFeeding(id) {
-  state.editingFeedingId = id || null;
+  const k = getKid(); if (!k) { toast('먼저 자녀를 추가하세요'); return; }
   const ex = id ? state.feedings.find(f => f.id === id) : null;
-  document.getElementById('feedingModalTitle').textContent = ex ? '🍼 수유 수정' : '🍼 수유 기록';
   let dt;
   if (ex) dt = parseDt(ex.datetime);
-  else if (state.careDate) {
-    dt = new Date(state.careDate);
-    const now = new Date();
-    dt.setHours(now.getHours(), now.getMinutes(), 0, 0);
-  } else dt = new Date();
-  const inp = dtToInputs(dt);
-  document.getElementById('feedingDate').value = inp.date;
-  document.getElementById('feedingTime').value = inp.time;
-  document.getElementById('feedingType').value = ex?.type || 'breast';
-  document.getElementById('feedingSide').value = ex?.side || '';
-  document.getElementById('feedingAmount').value = ex?.amount || '';
-  document.getElementById('feedingDuration').value = ex?.durationMin || '';
-  document.getElementById('feedingMemo').value = ex?.memo || '';
-  document.getElementById('btnDeleteFeeding').style.display = ex ? '' : 'none';
-  toggleFeedingSide();
-  showModal('modalFeeding');
+  else if (state.careDate) { dt = new Date(state.careDate); const n = new Date(); dt.setHours(n.getHours(), n.getMinutes(), 0, 0); }
+  else dt = new Date();
+  feedSheetState = {
+    editId: ex ? ex.id : null,
+    base: new Date(dt.getTime()),
+    start: new Date(dt.getTime()),
+    type: ex?.type || 'breast',
+    side: ex?.side || '',
+    amount: Number(ex?.amount) || 0,
+    durMin: Number(ex?.durationMin) || 0,
+    tags: Array.isArray(ex?.tags) ? ex.tags.slice() : [],
+  };
+  document.getElementById('feedSheetTitle').textContent = ex ? '수유 수정' : '수유';
+  document.getElementById('feedSheetDelete').style.display = ex ? '' : 'none';
+  document.getElementById('feedTimeRange').value = 0;
+  document.getElementById('feedMemoPro').value = ex?.memo || '';
+  renderFeedTags();
+  refreshFeedSheet();
+  document.getElementById('sheetFeeding').classList.add('show');
 }
-function toggleFeedingSide() {
-  const t = document.getElementById('feedingType').value;
-  document.getElementById('feedingSideField').style.display = (t === 'breast' || t === 'mixed') ? '' : 'none';
+window.closeFeedingSheet = () => document.getElementById('sheetFeeding').classList.remove('show');
+
+function refreshFeedSheet() {
+  const s = feedSheetState; if (!s) return;
+  document.querySelectorAll('#feedTypeSeg button').forEach(b => b.classList.toggle('on', b.dataset.ft === s.type));
+  const accent = s.type === 'formula' ? '#F5A623' : (s.type === 'solid' ? '#C9A227' : (s.type === 'mixed' ? '#E8835A' : '#FF8B8B'));
+  document.getElementById('sheetFeeding').style.setProperty('--accent', accent);
+  document.getElementById('feedDateLabel').textContent = `${s.start.getMonth()+1}월 ${s.start.getDate()}일`;
+  document.getElementById('feedTimeBig').textContent = fmtTime(s.start);
+  if (s.durMin > 0) { const end = new Date(s.start.getTime() + s.durMin*60000); document.getElementById('feedTimeEnd').textContent = '~ ' + fmtTime(end); }
+  else document.getElementById('feedTimeEnd').textContent = '';
+  document.getElementById('feedDurLabel').textContent = s.durMin > 0 ? (s.durMin >= 60 ? `${Math.floor(s.durMin/60)}시간 ${s.durMin%60}분` : `${s.durMin}분`) : '0분';
+  document.getElementById('feedAmtBig').textContent = s.amount;
+  document.getElementById('feedAmtRange').value = s.amount;
+  document.querySelectorAll('#feedSideSeg button').forEach(b => b.classList.toggle('on', b.dataset.side === s.side));
+  const isBreast = s.type === 'breast' || s.type === 'mixed';
+  document.getElementById('feedSideBlock').style.display = isBreast ? '' : 'none';
+  const showAmt = s.type === 'formula' || s.type === 'mixed' || s.type === 'solid';
+  document.getElementById('feedAmtBlock').style.display = showAmt ? '' : 'none';
 }
-document.getElementById('feedingType').addEventListener('change', toggleFeedingSide);
-document.getElementById('btnSaveFeeding').addEventListener('click', () => {
-  const k = getKid(); if (!k) return;
-  const date = document.getElementById('feedingDate').value;
-  const time = document.getElementById('feedingTime').value;
-  if (!date) return toast('날짜를 입력하세요');
-  const datetime = dtIso(dtFromInputs(date, time));
+function renderFeedTags() {
+  const wrap = document.getElementById('feedTags'); if (!wrap) return; wrap.innerHTML = '';
+  const all = FEED_TAGS.slice();
+  feedSheetState.tags.forEach(t => { if (!all.includes(t)) all.push(t); });
+  all.forEach(t => {
+    const b = document.createElement('button'); b.type = 'button';
+    b.className = 'bt-tag' + (feedSheetState.tags.includes(t) ? ' on' : ''); b.textContent = t;
+    b.onclick = () => { const i = feedSheetState.tags.indexOf(t); if (i >= 0) feedSheetState.tags.splice(i,1); else feedSheetState.tags.push(t); renderFeedTags(); };
+    wrap.appendChild(b);
+  });
+  const add = document.createElement('button'); add.type = 'button'; add.className = 'bt-tag'; add.textContent = '＋';
+  add.onclick = () => { const v = prompt('태그 입력'); if (v && v.trim()) { feedSheetState.tags.push(v.trim()); renderFeedTags(); } };
+  wrap.appendChild(add);
+}
+// 컨트롤 바인딩
+document.querySelectorAll('#feedTypeSeg button').forEach(b => b.addEventListener('click', () => { feedSheetState.type = b.dataset.ft; refreshFeedSheet(); }));
+document.querySelectorAll('#feedSideSeg button').forEach(b => b.addEventListener('click', () => { feedSheetState.side = feedSheetState.side === b.dataset.side ? '' : b.dataset.side; refreshFeedSheet(); }));
+document.getElementById('feedTimeRange').addEventListener('input', (e) => { const v = parseInt(e.target.value) || 0; feedSheetState.start = new Date(feedSheetState.base.getTime() + v*60000); refreshFeedSheet(); });
+function shiftFeedBase(min) {
+  feedSheetState.base = new Date(feedSheetState.base.getTime() + min*60000);
+  const v = parseInt(document.getElementById('feedTimeRange').value) || 0;
+  feedSheetState.start = new Date(feedSheetState.base.getTime() + v*60000);
+  refreshFeedSheet();
+}
+document.getElementById('feedMinus1h').addEventListener('click', () => shiftFeedBase(-60));
+document.getElementById('feedPlus1h').addEventListener('click', () => shiftFeedBase(60));
+document.getElementById('feedAmtRange').addEventListener('input', (e) => { feedSheetState.amount = parseInt(e.target.value) || 0; document.getElementById('feedAmtBig').textContent = feedSheetState.amount; });
+document.querySelectorAll('.bt-stepper [data-dur]').forEach(b => b.addEventListener('click', () => { feedSheetState.durMin = Math.max(0, feedSheetState.durMin + (parseInt(b.dataset.dur)||0)); refreshFeedSheet(); }));
+document.getElementById('feedSheetSave').addEventListener('click', () => {
+  const k = getKid(); const s = feedSheetState; if (!k || !s) return;
+  const isBreast = s.type === 'breast' || s.type === 'mixed';
+  const showAmt = s.type === 'formula' || s.type === 'mixed' || s.type === 'solid';
   const data = {
     kidId: k.id,
-    datetime,
-    type: document.getElementById('feedingType').value,
-    side: document.getElementById('feedingSide').value || null,
-    amount: parseInt(document.getElementById('feedingAmount').value) || null,
-    durationMin: parseInt(document.getElementById('feedingDuration').value) || null,
-    memo: document.getElementById('feedingMemo').value.trim() || null,
+    datetime: dtIso(s.start),
+    type: s.type,
+    side: isBreast ? (s.side || null) : null,
+    amount: showAmt ? (s.amount || null) : null,
+    durationMin: s.durMin || null,
+    tags: s.tags.slice(),
+    memo: document.getElementById('feedMemoPro').value.trim() || null,
   };
-  if (state.editingFeedingId) {
-    const i = state.feedings.findIndex(f => f.id === state.editingFeedingId);
-    if (i !== -1) state.feedings[i] = { ...state.feedings[i], ...data };
-  } else {
-    state.feedings.push({ id: uid(), ...data });
-  }
-  save(); closeModal('modalFeeding'); renderCare(); toast('수유 기록 저장됨');
+  if (s.editId) { const i = state.feedings.findIndex(f => f.id === s.editId); if (i !== -1) state.feedings[i] = { ...state.feedings[i], ...data }; }
+  else state.feedings.push({ id: uid(), ...data });
+  save(); closeFeedingSheet(); renderCare(); toast('수유 기록 저장됨');
 });
-document.getElementById('btnDeleteFeeding').addEventListener('click', () => {
-  if (!state.editingFeedingId) return;
-  state.feedings = state.feedings.filter(f => f.id !== state.editingFeedingId);
-  save(); closeModal('modalFeeding'); renderCare(); toast('삭제되었습니다');
+document.getElementById('feedSheetDelete').addEventListener('click', () => {
+  const s = feedSheetState; if (!s || !s.editId) return;
+  state.feedings = state.feedings.filter(f => f.id !== s.editId);
+  save(); closeFeedingSheet(); renderCare(); toast('삭제되었습니다');
 });
 
 /* ===== 수면 ===== */
@@ -2886,7 +3177,169 @@ const KR_VACCINE_SCHEDULE = [
   { id: 'hepa1', name: 'A형간염 1차', monthsAfterBirth: 12, info: '생후 12개월' },
   { id: 'je1', name: '일본뇌염 (불활성화 1차)', monthsAfterBirth: 12, info: '생후 12개월' },
   { id: 'flu', name: '인플루엔자 1차', monthsAfterBirth: 6, info: '생후 6개월 ~ 매년' },
+  // 국가 영유아 건강검진 (건강검진 8차 + 구강검진 3차) — 무료, 지정 병·의원
+  { id: 'checkup1', name: '영유아 건강검진 1차', daysAfterBirth: 20, info: '생후 14~35일' },
+  { id: 'checkup2', name: '영유아 건강검진 2차', monthsAfterBirth: 4, info: '생후 4~6개월' },
+  { id: 'checkup3', name: '영유아 건강검진 3차', monthsAfterBirth: 9, info: '생후 9~12개월' },
+  { id: 'checkup4', name: '영유아 건강검진 4차', monthsAfterBirth: 18, info: '생후 18~24개월' },
+  { id: 'checkup5', name: '영유아 건강검진 5차', monthsAfterBirth: 30, info: '생후 30~36개월' },
+  { id: 'checkup6', name: '영유아 건강검진 6차', monthsAfterBirth: 42, info: '생후 42~48개월' },
+  { id: 'checkup7', name: '영유아 건강검진 7차', monthsAfterBirth: 54, info: '생후 54~60개월' },
+  { id: 'checkup8', name: '영유아 건강검진 8차', monthsAfterBirth: 66, info: '생후 66~71개월' },
+  { id: 'oral1', name: '영유아 구강검진 1차', monthsAfterBirth: 18, info: '생후 18~29개월' },
+  { id: 'oral2', name: '영유아 구강검진 2차', monthsAfterBirth: 42, info: '생후 42~53개월' },
+  { id: 'oral3', name: '영유아 구강검진 3차', monthsAfterBirth: 54, info: '생후 54~65개월' },
 ];
+
+/* ===== 할일·가이드 섹션 ===== */
+const ADMIN_TASKS = [
+  { id:'birth_report', title:'출생신고',                     when:'생후 1개월 이내', how:'주민센터 또는 정부24 온라인' },
+  { id:'first_meet',   title:'첫만남이용권 신청 (200만원)',   when:'출생 후',        how:'복지로/정부24 · 국민행복카드 바우처' },
+  { id:'parent_pay',   title:'부모급여·아동수당 신청',        when:'생후 60일 이내',  how:'주민센터/복지로/정부24 (60일 내 신청시 소급)' },
+  { id:'health_ins',   title:'건강보험 피부양자 등록(아기)',  when:'출생 후',        how:'국민건강보험공단 1577-1000' },
+  { id:'momcare',      title:'산모·신생아 건강관리 지원 신청', when:'출산 60일 이내',  how:'복지로/보건소 (소득기준)' },
+  { id:'vac_register', title:'예방접종 등록·확인',            when:'접종 시작 시',    how:'예방접종도우미(nip.kdca.go.kr) 앱' },
+  { id:'bank',         title:'아기 명의 통장 개설',           when:'출생신고 후',    how:'은행 방문 · 기본증명서/가족관계증명서 지참' },
+  { id:'insurance',    title:'태아보험 → 어린이보험 개시',    when:'출생 후',        how:'가입 보험사 연락' },
+  { id:'car_seat',     title:'카시트 장착 확인 (퇴원 전)',    when:'퇴원 전',        how:'' },
+  { id:'company_leave',title:'출산휴가·육아휴직 신고',        when:'해당 시',        how:'회사 인사팀 · 고용보험 급여 신청' },
+];
+// 대구분(개월: mFrom~mTo) → 중구분(주차: w, 초기엔 wFrom~wTo 주로 '이번 주' 강조)
+const GUIDE = [
+  { mFrom:0, mTo:1, label:'0개월 · 신생아', weeks:[
+    { w:'1주', wFrom:0, wTo:1, feed:'1회 30~60ml · 하루 8~12회(2~3시간마다)', play:'피부 맞대기, 20~30cm 눈맞춤, 밝은 빛에 반응', grow:'생리적 체중감소→회복, 하루 16~20시간 수면, 배꼽·황달 관찰' },
+    { w:'2주', wFrom:1, wTo:2, feed:'1회 60~80ml · 하루 8~10회', play:'얼굴 응시, 소리에 놀람반사', grow:'출생체중 회복 · 1차 영유아 건강검진(14~35일)' },
+    { w:'3주', wFrom:2, wTo:3, feed:'1회 70~90ml', play:'짧은 각성 시간에 안고 말 걸기', grow:'영아산통(저녁 배앓이·울음) 시작될 수 있음' },
+    { w:'4주', wFrom:3, wTo:4, feed:'1회 80~100ml · 하루 7~8회', play:'잠깐 눈맞춤 유지, 흑백 모빌', grow:'엎드려 목 살짝 들기 · BCG·B형간염 2차' },
+  ]},
+  { mFrom:1, mTo:2, label:'1개월', weeks:[
+    { w:'5~6주', wFrom:4, wTo:6, feed:'1회 90~120ml', play:'사회적 미소 시작, "아·우" 옹알이', grow:'각성 시간이 늘어남' },
+    { w:'7~8주', wFrom:6, wTo:8, feed:'1회 100~120ml · 하루 6~7회', play:'소리 나는 쪽 쳐다봄, 딸랑이 반응', grow:'2개월 예방접종(DTaP·폴리오·Hib·PCV·로타 1차)' },
+  ]},
+  { mFrom:2, mTo:3, label:'2개월', weeks:[
+    { w:'9~10주', wFrom:8, wTo:10, feed:'1회 120~150ml · 하루 6회', play:'손 발견해 빨기, 마주보고 옹알이 주고받기', grow:'목 가누기 발달' },
+    { w:'11~12주', wFrom:10, wTo:12, feed:'1회 120~150ml', play:'엎드려 가슴 들기, 잡아주면 뒤집기 시도', grow:'밤잠이 길어지기 시작' },
+  ]},
+  { mFrom:3, mTo:4, label:'3개월', weeks:[
+    { w:'전체', feed:'1회 120~160ml · 하루 5~6회', play:'양손 모으기, 물건 향해 손 뻗기, 소리내 웃기', grow:'목을 완전히 가눔' },
+  ]},
+  { mFrom:4, mTo:5, label:'4개월', weeks:[
+    { w:'전체', feed:'1회 150~180ml · 하루 5회 (이유식 준비 신호 관찰)', play:'뒤집기(등→배), 잡은 것 입으로, 거울 반응', grow:'2·4개월 접종 · 2차 건강검진 시기' },
+  ]},
+  { mFrom:5, mTo:6, label:'5개월', weeks:[
+    { w:'전체', feed:'1회 160~200ml + 초기 이유식 시작 가능(만 4~6개월)', play:'지지하면 앉기, 발 잡고 놀기', grow:'이앓이·침 많아짐' },
+  ]},
+  { mFrom:6, mTo:7, label:'6개월', weeks:[
+    { w:'전체', feed:'이유식 1~2회(미음·죽) + 분유 600~800ml/일', play:'혼자 잠깐 앉기, 손바꿔 쥐기, 낯가림 시작', grow:'첫니 나기 시작' },
+  ]},
+  { mFrom:7, mTo:9, label:'7~8개월', weeks:[
+    { w:'전체', feed:'이유식 2회(중기·으깬형) + 분유 500~700ml', play:'기어가기, 까꿍놀이, 이름 부르면 반응', grow:'붙잡고 서기 시도' },
+  ]},
+  { mFrom:9, mTo:12, label:'9~11개월', weeks:[
+    { w:'전체', feed:'이유식 3회(후기·진밥) + 분유 500ml + 손가락 음식', play:'붙잡고 걷기, 짝짜꿍·빠이빠이, 컵쌓기', grow:'3차 건강검진 · 첫 단어 준비' },
+  ]},
+  { mFrom:12, mTo:15, label:'12~14개월', weeks:[
+    { w:'전체', feed:'유아식 + 생우유 400~500ml/일', play:'혼자 걷기, 첫 단어, 블록 쌓기', grow:'MMR·수두·A형간염·일본뇌염 접종' },
+  ]},
+  { mFrom:15, mTo:18, label:'15~17개월', weeks:[
+    { w:'전체', feed:'하루 3끼 + 간식 2회', play:'크레용 끄적이기, 컵으로 마시기, 간단한 지시 따르기', grow:'어휘 늘기(10~20단어)' },
+  ]},
+  { mFrom:18, mTo:24, label:'18~23개월', weeks:[
+    { w:'전체', feed:'가족 식사 위주', play:'두 단어 문장, 계단 오르기, 역할놀이', grow:'4차 건강검진 · 구강검진 1차' },
+  ]},
+  { mFrom:24, mTo:999, label:'24개월~', weeks:[
+    { w:'전체', feed:'가족 식사 + 균형 간식', play:'뛰기, 세 단어 문장, 색·모양 구분', grow:'배변훈련 시작 시기' },
+  ]},
+];
+function babyAgeMonths(){
+  const k = getKid(); if (!k || !k.birthDate) return null;
+  const b = new Date(k.birthDate), n = new Date();
+  if (b > n) return -1;
+  let m = (n.getFullYear()-b.getFullYear())*12 + (n.getMonth()-b.getMonth());
+  if (n.getDate() < b.getDate()) m--;
+  return Math.max(0, m);
+}
+function getKidChecklist(){
+  const k = getKid(); if (!k) return null;
+  if (!state.checklist[k.id]) state.checklist[k.id] = { done:{}, custom:[] };
+  const c = state.checklist[k.id];
+  if (!c.done) c.done = {}; if (!c.custom) c.custom = [];
+  return c;
+}
+function renderGuide(){ const k = getKid(); if (!k) return; renderAdminChecklist(); renderAgeGuide(); }
+function renderAdminChecklist(){
+  const c = getKidChecklist(); if (!c) return;
+  const all = [...ADMIN_TASKS.map(t => ({ ...t, custom:false })), ...c.custom.map(t => ({ ...t, custom:true }))];
+  const doneN = all.filter(t => c.done[t.id]).length;
+  const pct = all.length ? Math.round(doneN/all.length*100) : 0;
+  document.getElementById('adminProgress').innerHTML =
+    `<div style="background:#F1F5F9;border-radius:999px;height:10px;overflow:hidden;"><div style="width:${pct}%;height:100%;background:#22C55E;transition:width .2s;"></div></div>
+     <div style="font-size:11.5px;color:var(--text-secondary);margin-top:4px;">${doneN}/${all.length} 완료 · ${pct}%</div>`;
+  document.getElementById('adminChecklist').innerHTML = all.map(t => {
+    const done = !!c.done[t.id];
+    return `<div style="display:flex;align-items:flex-start;gap:10px;padding:11px 12px;background:${done?'#F0FDF4':'#fff'};border:1px solid ${done?'#BBF7D0':'var(--border)'};border-radius:10px;margin-bottom:6px;">
+      <input type="checkbox" ${done?'checked':''} onchange="toggleAdmin('${t.id}')" style="width:18px;height:18px;margin-top:1px;flex-shrink:0;cursor:pointer;">
+      <div style="flex:1;min-width:0;">
+        <div style="font-size:13px;font-weight:600;${done?'text-decoration:line-through;color:var(--text-tertiary);':''}">${escapeHtml(t.title)}</div>
+        ${(t.when||t.how) ? `<div style="font-size:11px;color:var(--text-tertiary);margin-top:2px;">${escapeHtml([t.when,t.how].filter(Boolean).join(' · '))}</div>` : ''}
+      </div>
+      ${t.custom ? `<button class="btn small" onclick="delAdmin('${t.id}')" style="flex-shrink:0;">삭제</button>` : ''}
+    </div>`;
+  }).join('');
+}
+window.toggleAdmin = (id) => { const c = getKidChecklist(); if (!c) return; if (c.done[id]) delete c.done[id]; else c.done[id] = true; save(); renderAdminChecklist(); };
+window.delAdmin = (id) => { const c = getKidChecklist(); if (!c) return; c.custom = c.custom.filter(t => t.id !== id); delete c.done[id]; save(); renderAdminChecklist(); };
+function babyAgeWeeks(){
+  const k = getKid(); if (!k || !k.birthDate) return null;
+  const b = new Date(k.birthDate), n = new Date();
+  if (b > n) return -1;
+  return Math.floor((n - b) / (7 * 86400000));
+}
+let guideOpen = null;
+window.toggleGuideMonth = (gi) => { guideOpen = (guideOpen === gi) ? -1 : gi; renderAgeGuide(); };
+function renderAgeGuide(){
+  const am = babyAgeMonths(), aw = babyAgeWeeks();
+  // 현재 대구분(개월) 인덱스
+  let curIdx = -1;
+  if (am != null && am >= 0){
+    curIdx = GUIDE.findIndex(g => am >= g.mFrom && am < g.mTo);
+    if (curIdx < 0 && am >= GUIDE[GUIDE.length-1].mFrom) curIdx = GUIDE.length - 1;
+  }
+  if (guideOpen == null) guideOpen = curIdx >= 0 ? curIdx : 0;
+  document.getElementById('ageGuide').innerHTML = GUIDE.map((g, gi) => {
+    const isCur = gi === curIdx;
+    const open = gi === guideOpen;
+    const weeksHtml = g.weeks.map(w => {
+      const wCur = isCur && w.wFrom != null && aw != null && aw >= 0 && aw >= w.wFrom && aw < w.wTo;
+      return `<div style="border-top:1px solid var(--border);padding:10px 0;">
+        <div style="font-size:12px;font-weight:700;color:${wCur?'#EA580C':'var(--text-secondary)'};margin-bottom:5px;">${w.w}${wCur?' <span style="font-size:10px;color:#fff;background:#EA580C;padding:1px 7px;border-radius:999px;">이번 주</span>':''}</div>
+        <div style="display:grid;gap:4px;font-size:12px;line-height:1.5;">
+          <div>🍼 <b>수유</b> · ${escapeHtml(w.feed)}</div>
+          <div>🧸 <b>놀이/발달</b> · ${escapeHtml(w.play)}</div>
+          <div>📈 <b>성장</b> · ${escapeHtml(w.grow)}</div>
+        </div>
+      </div>`;
+    }).join('');
+    return `<div style="border:1px solid ${isCur?'#FDBA74':'var(--border)'};border-radius:12px;margin-bottom:8px;overflow:hidden;">
+      <button onclick="toggleGuideMonth(${gi})" style="width:100%;text-align:left;background:${isCur?'#FFF7ED':'#fff'};border:none;padding:12px 14px;cursor:pointer;display:flex;justify-content:space-between;align-items:center;font-family:inherit;">
+        <span style="font-size:13px;font-weight:700;color:${isCur?'#9A3412':'var(--text)'};">${g.label}${isCur?' <span style="font-size:10px;color:#fff;background:#EA580C;padding:2px 8px;border-radius:999px;margin-left:4px;">지금</span>':''}</span>
+        <span style="color:var(--text-tertiary);font-size:12px;">${open?'▲ 접기':'▼ 펼치기'}</span>
+      </button>
+      ${open ? `<div style="padding:0 14px 12px;">${weeksHtml}</div>` : ''}
+    </div>`;
+  }).join('');
+  const sub = document.getElementById('ageGuideSub');
+  if (sub){
+    if (aw === -1) sub.textContent = '아직 출생 전 — 출생 후 주차·개월에 맞춰 강조돼요';
+    else if (am == null) sub.textContent = '생년월일을 등록하면 현재 주차를 강조해줘요';
+    else sub.textContent = `현재 약 ${am}개월 / ${aw}주 — 개월을 펼쳐 주차별로 확인 (일반 참고용)`;
+  }
+}
+document.getElementById('btnAddAdminTask').addEventListener('click', () => {
+  const inp = document.getElementById('adminNewTask'); const v = (inp.value || '').trim(); if (!v) return;
+  const c = getKidChecklist(); if (!c){ toast('먼저 자녀를 추가하세요'); return; }
+  c.custom.push({ id:'c_'+uid(), title:v }); inp.value = ''; save(); renderAdminChecklist();
+});
 
 function calcVaccineDate(birthDate, item) {
   if (!birthDate) return null;
@@ -2971,7 +3424,7 @@ function renderVaccine() {
           const borderColor = isComplete ? '#BBF7D0' : (isOverdue ? '#FECACA' : 'var(--border)');
           return `
             <div style="display:flex;align-items:center;gap:12px;padding:12px 14px;background:${bgColor};border:1px solid ${borderColor};border-radius:10px;margin-bottom:6px;">
-              <div style="font-size:24px;flex-shrink:0;">${isComplete ? '✅' : '💉'}</div>
+              <div style="font-size:24px;flex-shrink:0;">${isComplete ? '✅' : ((v.name||'').includes('검진') ? '🩺' : '💉')}</div>
               <div style="flex:1;min-width:0;">
                 <div style="font-size:13px;font-weight:600;${isComplete ? 'text-decoration:line-through;color:var(--text-tertiary);' : ''}">${escapeHtml(v.name)}</div>
                 <div style="font-size:11.5px;color:var(--text-tertiary);margin-top:2px;">
@@ -3132,10 +3585,165 @@ document.getElementById('btnDeleteVisit').addEventListener('click', () => {
   toast('삭제되었습니다');
 });
 
+/* ===== 하루 일과표 (24h × 7일, 막대+이모지+툴팁) ===== */
+let patternFilter = { feeding:true, sleep:true, diaper:true, bath:true, temp:true, med:true };
+const PATTERN_TYPES = [
+  { key:'feeding', label:'🍼 수유' },
+  { key:'sleep',   label:'😴 수면' },
+  { key:'diaper',  label:'💩 기저귀' },
+  { key:'bath',    label:'🛁 목욕' },
+  { key:'temp',    label:'🌡️ 체온' },
+  { key:'med',     label:'💊 약' },
+];
+function renderDayPatternFilter() {
+  const el = document.getElementById('dayPatternFilter'); if (!el) return;
+  el.innerHTML = '';
+  PATTERN_TYPES.forEach(t => {
+    const b = document.createElement('div');
+    b.className = 'daypat-chip' + (patternFilter[t.key] ? '' : ' off');
+    b.textContent = t.label;
+    b.onclick = () => { patternFilter[t.key] = !patternFilter[t.key]; renderDayPatternFilter(); renderDayPattern(); };
+    el.appendChild(b);
+  });
+}
+function renderDayPattern() {
+  const k = getKid();
+  const host = document.getElementById('dayPatternChart'); if (!host) return;
+  const daysEl = document.getElementById('dayPatternDays');
+  const tip = document.getElementById('dayPatternTip');
+  const emptyEl = document.getElementById('dayPatternEmpty');
+  const wrap = host.parentElement;
+  host.innerHTML = ''; daysEl.innerHTML = ''; if (tip) tip.style.display = 'none';
+  if (!k) { wrap.style.display = 'none'; if (emptyEl) emptyEl.style.display = ''; return; }
+  const H = 520;
+  host.style.height = H + 'px';
+  const now = new Date();
+  const days = [];
+  for (let i = 6; i >= 0; i--) { const d = new Date(now); d.setDate(now.getDate() - i); days.push(isoDate(d)); }
+  // 시간 그리드 + 라벨
+  [0,3,6,9,12,15,18,21,24].forEach(h => {
+    const y = h / 24 * H;
+    const line = document.createElement('div'); line.className = 'daypat-grid'; line.style.top = y + 'px'; host.appendChild(line);
+    const lab = document.createElement('div'); lab.className = 'daypat-hlabel';
+    lab.textContent = ('0' + h).slice(-2); lab.style.left = '2px'; lab.style.top = (y - 7) + 'px'; host.appendChild(lab);
+  });
+  const hourOf = (dt) => dt.getHours() + dt.getMinutes() / 60;
+  let any = false;
+  const addBar = (col, startH, durH, color, emoji, tipText, shape) => {
+    const top = startH / 24 * H;
+    const bar = document.createElement('div'); bar.className = 'daypat-bar';
+    if (shape === 'block') {
+      let hgt = Math.max((durH || 0) / 24 * H, 12); hgt = Math.min(hgt, H - top);
+      bar.classList.add('blk');
+      bar.style.top = top + 'px'; bar.style.height = hgt + 'px'; bar.style.background = color;
+    } else if (shape === 'line') {
+      bar.classList.add('ln');
+      bar.style.top = (top - 1.5) + 'px'; bar.style.background = color;
+      if (emoji) { const e = document.createElement('span'); e.className = 'ln-emo'; e.textContent = emoji; bar.appendChild(e); }
+    } else {
+      bar.classList.add('ico');
+      bar.style.top = (top - 8) + 'px'; bar.textContent = emoji;
+    }
+    const show = () => {
+      tip.textContent = tipText; tip.style.display = 'block';
+      const wr = wrap.getBoundingClientRect(), r = bar.getBoundingClientRect();
+      let x = r.left - wr.left + r.width / 2;
+      tip.style.left = '0px'; tip.style.top = '0px';
+      const tw = tip.offsetWidth, th = tip.offsetHeight;
+      x = Math.max(4, Math.min(x - tw / 2, wr.width - tw - 4));
+      let y = r.top - wr.top - th - 4; if (y < 2) y = r.top - wr.top + r.height + 4;
+      tip.style.left = x + 'px'; tip.style.top = y + 'px';
+    };
+    bar.addEventListener('mouseenter', show);
+    bar.addEventListener('mouseleave', () => { tip.style.display = 'none'; });
+    bar.addEventListener('click', (e) => { e.stopPropagation(); show(); });
+    col.appendChild(bar);
+  };
+  days.forEach(date => {
+    const col = document.createElement('div'); col.className = 'daypat-col'; col.style.height = H + 'px';
+    if (patternFilter.feeding) {
+      state.feedings.filter(f => f.kidId === k.id && (f.datetime||'').startsWith(date)).forEach(f => {
+        const dt = parseDt(f.datetime); if (!dt) return; any = true;
+        const emoji = f.type==='formula'?'🍼':(f.type==='solid'?'🥄':(f.type==='mixed'?'🍼':'🤱'));
+        const color = f.type==='formula'?'#F5A623':(f.type==='solid'?'#C9A227':'#FF8B8B');
+        const tlabel = {breast:'모유',formula:'분유',mixed:'혼합',solid:'이유식'}[f.type]||'수유';
+        const sideL = {left:'왼쪽',right:'오른쪽',both:'양쪽'}[f.side]||'';
+        const parts = [emoji+' '+tlabel+(sideL?(' '+sideL):''), fmtTime(dt)];
+        if (f.amount) parts.push(f.amount+'ml');
+        if (f.durationMin) parts.push(f.durationMin+'분');
+        if (f.memo) parts.push(f.memo);
+        addBar(col, hourOf(dt), (Number(f.durationMin)||0)/60, color, emoji, parts.join(' · '), 'line');
+      });
+    }
+    if (patternFilter.sleep) {
+      state.sleeps.filter(s => s.kidId === k.id && (s.startTime||'').startsWith(date)).forEach(s => {
+        const dt = parseDt(s.startTime); if (!dt) return; any = true;
+        const end = s.endTime ? parseDt(s.endTime) : null;
+        const durH = end ? (end - dt) / 3600000 : 0.5;
+        const tlabel = s.type==='night'?'밤잠':(s.type==='nap'?'낮잠':'수면');
+        const parts = ['😴 '+tlabel, end?`${fmtTime(dt)}~${fmtTime(end)}`:`${fmtTime(dt)}~`, end?fmtDuration(end-dt):'진행 중'];
+        if (s.memo) parts.push(s.memo);
+        addBar(col, hourOf(dt), durH, '#5B7CE6', '', parts.join(' · '), 'block');
+      });
+    }
+    if (patternFilter.diaper) {
+      state.diapers.filter(d => d.kidId === k.id && (d.datetime||'').startsWith(date)).forEach(d => {
+        const dt = parseDt(d.datetime); if (!dt) return; any = true;
+        const emoji = d.type==='poo'?'💩':(d.type==='both'?'💧💩':'💧');
+        const colorLabels = { yellow:'노란색(정상)', green:'초록색', brown:'갈색', dark:'짙은색', watery:'묽음', hard:'단단함', red:'⚠️붉은색', white:'⚠️흰색' };
+        const parts = [emoji+' 기저귀', fmtTime(dt)];
+        if (d.color) parts.push(colorLabels[d.color]||d.color);
+        if (d.memo) parts.push(d.memo);
+        addBar(col, hourOf(dt), 0, '#7FB8E8', emoji, parts.join(' · '), 'icon');
+      });
+    }
+    if (patternFilter.bath) {
+      state.baths.filter(b => b.kidId === k.id && (b.datetime||'').startsWith(date)).forEach(b => {
+        const dt = parseDt(b.datetime); if (!dt) return; any = true;
+        const parts = ['🛁 목욕', fmtTime(dt)]; if (b.memo) parts.push(b.memo);
+        addBar(col, hourOf(dt), 0, '#5BC0DE', '🛁', parts.join(' · '), 'icon');
+      });
+    }
+    if (patternFilter.temp) {
+      state.temperatures.filter(t => t.kidId === k.id && (t.datetime||'').startsWith(date)).forEach(t => {
+        const dt = parseDt(t.datetime); if (!dt) return; any = true;
+        const temp = Number(t.temp)||0; const fever = temp>=37.5;
+        const parts = [(fever?'🔥':'🌡️')+' '+temp.toFixed(1)+'°C'+(fever?' 발열':''), fmtTime(dt)]; if (t.memo) parts.push(t.memo);
+        addBar(col, hourOf(dt), 0, '#E57373', fever?'🔥':'🌡️', parts.join(' · '), 'icon');
+      });
+    }
+    if (patternFilter.med) {
+      state.medications.filter(m => m.kidId === k.id && (m.datetime||'').startsWith(date)).forEach(m => {
+        const dt = parseDt(m.datetime); if (!dt) return; any = true;
+        const parts = ['💊 '+(m.name||'약'), fmtTime(dt)]; if (m.dosage) parts.push(m.dosage);
+        addBar(col, hourOf(dt), 0, '#B39DDB', '💊', parts.join(' · '), 'icon');
+      });
+    }
+    host.appendChild(col);
+  });
+  // 날짜 라벨
+  days.forEach((date, i) => {
+    const e = document.createElement('div');
+    const d = parseDt(date + 'T00:00');
+    e.textContent = `${d.getMonth()+1}/${d.getDate()}`;
+    if (i === days.length - 1) e.style.color = '#FF6B6B';
+    daysEl.appendChild(e);
+  });
+  wrap.style.display = any ? '' : 'none';
+  if (emptyEl) emptyEl.style.display = any ? 'none' : '';
+}
+// 빈 곳 탭하면 툴팁 닫기
+document.addEventListener('click', (e) => {
+  if (e.target && e.target.classList && e.target.classList.contains('daypat-bar')) return;
+  const tip = document.getElementById('dayPatternTip'); if (tip) tip.style.display = 'none';
+});
+
 /* ===== 패턴 차트 (최근 7일) ===== */
 let feedChartObj, sleepChartObj, tempChartObj;
 function renderChart() {
   const k = getKid(); if (!k) return;
+  renderDayPatternFilter();
+  renderDayPattern();
 
   const now = new Date();
   const days = [];
