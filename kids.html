@@ -1064,15 +1064,25 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 function save() {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify({
-    kids: state.kids, entries: state.entries, growth: state.growth, milestones: state.milestones,
-    feedings: state.feedings, sleeps: state.sleeps, temperatures: state.temperatures,
-    medications: state.medications, baths: state.baths, diapers: state.diapers,
-    shopping: state.shopping,
-    shoppingCategories: state.shoppingCategories,
-    vaccinations: state.vaccinations, visits: state.visits, pregnancy: state.pregnancy,
-    checklist: state.checklist,
-  }));
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({
+      kids: state.kids, entries: state.entries, growth: state.growth, milestones: state.milestones,
+      feedings: state.feedings, sleeps: state.sleeps, temperatures: state.temperatures,
+      medications: state.medications, baths: state.baths, diapers: state.diapers,
+      shopping: state.shopping,
+      shoppingCategories: state.shoppingCategories,
+      vaccinations: state.vaccinations, visits: state.visits, pregnancy: state.pregnancy,
+      checklist: state.checklist,
+    }));
+    return true;
+  } catch (e) {
+    console.error('[kids] save 실패', e);
+    const quota = e && (e.name === 'QuotaExceededError' || e.code === 22 || /quota|exceeded/i.test(e.message || ''));
+    toast(quota
+      ? '⚠️ 저장 공간이 가득 찼어요 — 오래된 사진/기록을 줄여주세요'
+      : '저장 실패: ' + (e.message || ''));
+    return false;
+  }
 }
 function load() {
   const raw = localStorage.getItem(STORAGE_KEY);
@@ -1289,10 +1299,13 @@ document.getElementById('btnSaveEntry').addEventListener('click', () => {
     const e = state.entries.find(x => x.id === state.editingEntryId);
     if (e) Object.assign(e, { date, title, text, tags, photos });
   } else {
-    state.entries.push({ id: uid(), kidId: state.currentKidId, date, title, text, tags, photos });
+    const newId = uid();
+    state.entries.push({ id: newId, kidId: state.currentKidId, date, title, text, tags, photos });
+    state.editingEntryId = newId; // 저장 실패 후 재시도 시 중복 생성 방지
   }
+  if (!save()) return; // 저장 실패(공간부족 등): 모달·사진 유지하고 중단 → 공간 확보 후 다시 저장
   state.pendingEntryPhotos = [];
-  save(); renderAll(); closeModal('modalEntry');
+  renderAll(); closeModal('modalEntry');
   toast('저장되었습니다');
 });
 
@@ -3435,7 +3448,7 @@ function renderVaccine() {
                 </div>
               </div>
               <div style="display:flex;gap:4px;flex-shrink:0;">
-                ${!isComplete ? `<button class="btn small primary" onclick="completeVaccine('${v.id}')">완료</button>` : ''}
+                ${!isComplete ? `<button class="btn small primary" onclick="completeVaccine('${v.id}')">완료</button>` : `<button class="btn small" onclick="uncompleteVaccine('${v.id}')">↩ 되돌리기</button>`}
                 <button class="btn small" onclick="editVaccine('${v.id}')">수정</button>
               </div>
             </div>
@@ -3455,6 +3468,15 @@ window.completeVaccine = (id) => {
   autoMilestone(v.kidId, 'vaccine_' + v.vaccineId, v.completedDate, '💉', `${v.name} 완료`);
   save(); renderVaccine();
   toast(`${v.name} 완료 처리됨`);
+};
+window.uncompleteVaccine = (id) => {
+  const v = state.vaccinations.find(x => x.id === id);
+  if (!v) return;
+  v.completedDate = null;
+  // 완료 시 자동 생성된 마일스톤도 제거
+  state.milestones = state.milestones.filter(m => !(m.kidId === v.kidId && m._auto === 'vaccine_' + v.vaccineId));
+  save(); renderVaccine();
+  toast(`${v.name} 완료 취소됨`);
 };
 
 function openVaccineModal(id) {
