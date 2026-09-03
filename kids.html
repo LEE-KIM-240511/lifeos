@@ -1297,13 +1297,15 @@ document.getElementById('btnSaveEntry').addEventListener('click', () => {
   const photos = [...state.pendingEntryPhotos];
   if (state.editingEntryId) {
     const e = state.entries.find(x => x.id === state.editingEntryId);
-    if (e) Object.assign(e, { date, title, text, tags, photos });
+    if (!e) return;
+    const backup = { date: e.date, title: e.title, text: e.text, tags: e.tags, photos: e.photos };
+    Object.assign(e, { date, title, text, tags, photos });
+    if (!save()) { Object.assign(e, backup); return; } // 저장 실패 → 되돌리기 (유령 저장 방지)
   } else {
-    const newId = uid();
-    state.entries.push({ id: newId, kidId: state.currentKidId, date, title, text, tags, photos });
-    state.editingEntryId = newId; // 저장 실패 후 재시도 시 중복 생성 방지
+    const newEntry = { id: uid(), kidId: state.currentKidId, date, title, text, tags, photos };
+    state.entries.push(newEntry);
+    if (!save()) { state.entries.pop(); return; } // 저장 실패 → 방금 추가분 제거
   }
-  if (!save()) return; // 저장 실패(공간부족 등): 모달·사진 유지하고 중단 → 공간 확보 후 다시 저장
   state.pendingEntryPhotos = [];
   renderAll(); closeModal('modalEntry');
   toast('저장되었습니다');
