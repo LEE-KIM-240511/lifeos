@@ -2140,6 +2140,19 @@ function loadHealthStats() {
   }
 }
 
+// 정기 관리 다음 예정일: 직접 지정한 예정일(nextDate) 우선, 없으면 마지막일+주기
+function maintNextDate(item) {
+  if (item && item.nextDate) {
+    const d = new Date(item.nextDate);
+    if (!isNaN(d.getTime())) return d;
+  }
+  if (!item || !item.lastDate) return null;
+  const d = new Date(item.lastDate);
+  if (isNaN(d.getTime())) return null;
+  d.setMonth(d.getMonth() + (item.periodMonths || 3));
+  return d;
+}
+
 function loadMaintenanceStats() {
   try {
     const raw = localStorage.getItem('lifeos-maintenance-v1');
@@ -2161,9 +2174,8 @@ function loadMaintenanceStats() {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     items.forEach(item => {
-      if (!item.lastDate) return;
-      const next = new Date(item.lastDate);
-      next.setMonth(next.getMonth() + (item.periodMonths || 3));
+      const next = maintNextDate(item);
+      if (!next) return;
       next.setHours(0, 0, 0, 0);
       const days = Math.ceil((next - today) / 86400000);
       if (days < 0) overdue++;
@@ -3064,10 +3076,8 @@ function getAutoEvents() {
       const data = JSON.parse(raw);
       const items = data.items || [];
       items.forEach(item => {
-        if (!item.lastDate) return;
-        const next = new Date(item.lastDate);
-        next.setMonth(next.getMonth() + (item.periodMonths || 3));
-        if (isNaN(next.getTime())) return;
+        const next = maintNextDate(item);
+        if (!next) return;
         const today = new Date();
         today.setHours(0, 0, 0, 0);
         const daysUntil = Math.ceil((next - today) / 86400000);
@@ -4720,9 +4730,8 @@ function summarizeMaintenance(data) {
   const upcoming = [];
 
   items.forEach(item => {
-    if (!item.lastDate) return;
-    const next = new Date(item.lastDate);
-    next.setMonth(next.getMonth() + (item.periodMonths || 3));
+    const next = maintNextDate(item);
+    if (!next) return;
     next.setHours(0, 0, 0, 0);
     const days = Math.ceil((next - today) / 86400000);
     if (days < 0) overdue.push({ name: item.name, daysOver: -days });
