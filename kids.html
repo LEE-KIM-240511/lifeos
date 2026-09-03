@@ -3162,7 +3162,7 @@ function checkAutoMilestones(kidId) {
 const _origSave = save;
 save = function() {
   if (state.currentKidId) checkAutoMilestones(state.currentKidId);
-  _origSave();
+  return _origSave(); // 원본 save의 성공/실패(true/false)를 그대로 전달
 };
 
 /* ===== 한국 표준 예방접종 일정 ===== */
