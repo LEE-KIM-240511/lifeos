@@ -1333,7 +1333,7 @@ window.editEntry = (id) => {
 };
 
 // ============= 사진 업로드 =============
-function resizeImageToBase64(file, maxSize = 800, quality = 0.82) {
+function resizeImageToBase64(file, maxSize = 720, quality = 0.62) {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
     reader.onload = (e) => {

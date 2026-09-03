@@ -154,114 +154,6 @@ body {
   transition: all 0.15s;
 }
 .item-card:hover { border-color: var(--primary); }
-
-/* ===== 재고 카드 ===== */
-.stock-group { margin-bottom: 18px; }
-.stock-group-header {
-  font-size: 13px; font-weight: 700; color: var(--text-secondary);
-  margin: 0 4px 8px; display: flex; align-items: center; gap: 6px;
-}
-.stock-group-header .count {
-  font-size: 11px; color: var(--text-tertiary); font-weight: 500;
-}
-.stock-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(155px, 1fr));
-  gap: 8px;
-}
-.stock-namegroup { margin-bottom: 14px; }
-.stock-namegroup-header {
-  font-size: 12px; color: var(--text-secondary);
-  font-weight: 600;
-  margin: 4px 4px 6px;
-  display: flex; align-items: baseline; gap: 6px;
-}
-.stock-namegroup-header .total {
-  font-size: 11px; color: var(--text-tertiary); font-weight: 500;
-}
-.stock-card {
-  background: var(--card);
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  padding: 10px 12px;
-  display: flex; flex-direction: column; gap: 6px;
-  transition: border-color 0.15s;
-}
-.stock-card.expired {
-  border-color: var(--danger);
-  background: #FEF2F2;
-}
-.stock-card.expiring {
-  border-color: var(--warning);
-  background: #FFFBEB;
-}
-.stock-card .name {
-  font-size: 13.5px; font-weight: 600; color: var(--text);
-  line-height: 1.3; word-break: keep-all;
-}
-.stock-card .subname {
-  font-size: 11px; color: var(--text-secondary);
-  margin-top: -2px; line-height: 1.35; word-break: keep-all;
-}
-.stock-card .location {
-  font-size: 10.5px; color: var(--text-tertiary);
-  display: flex; align-items: center; gap: 3px;
-  margin-top: -2px;
-}
-.stock-card .expiry {
-  font-size: 10.5px; padding: 2px 6px; border-radius: 4px;
-  display: inline-block; font-weight: 600;
-  align-self: flex-start;
-}
-.stock-card .expiry.ok { background: #F1F5F9; color: var(--text-tertiary); font-weight: 500; }
-.stock-card .expiry.expiring { background: #FEF3C7; color: var(--warning); }
-.stock-card .expiry.expired { background: #FEE2E2; color: var(--danger); }
-.stock-card .qty-row {
-  display: flex; align-items: center; justify-content: flex-start;
-  gap: 4px; margin-top: 2px;
-}
-.stock-card .qty-btn {
-  width: 26px; height: 26px;
-  border-radius: 6px;
-  border: 1px solid var(--border);
-  background: var(--bg);
-  font-size: 14px; font-weight: 700;
-  color: var(--text-secondary);
-  cursor: pointer;
-  display: flex; align-items: center; justify-content: center;
-  transition: all 0.15s;
-  -webkit-tap-highlight-color: transparent;
-  user-select: none;
-  padding: 0;
-}
-.stock-card .qty-btn:active { transform: scale(0.92); background: var(--primary-light); }
-.stock-card .qty-btn.plus { color: var(--primary-dark); }
-.stock-card .qty-btn.minus { color: var(--text-secondary); }
-.stock-card .qty-num {
-  font-size: 14px; font-weight: 600; color: var(--text);
-  font-variant-numeric: tabular-nums;
-  min-width: 22px; text-align: center;
-}
-.stock-card .qty-unit {
-  font-size: 11px; color: var(--text-tertiary);
-  margin-left: 2px;
-}
-.stock-card .memo {
-  font-size: 11px; color: var(--text-tertiary); line-height: 1.4;
-  border-top: 1px dashed var(--border); padding-top: 6px;
-  word-break: keep-all;
-}
-.stock-card .edit-btn {
-  font-size: 10px; color: var(--text-tertiary);
-  background: transparent; border: none; cursor: pointer;
-  padding: 2px 4px; align-self: flex-end;
-  margin-top: -2px;
-}
-.stock-card .edit-btn:hover { color: var(--primary); }
-.stock-empty-state {
-  text-align: center; padding: 40px 20px;
-  color: var(--text-tertiary); font-size: 13px;
-}
 .item-card.overdue { border-color: #FCA5A5; background: #FEF2F2; }
 .item-card.upcoming { border-color: #FCD34D; background: #FFFBEB; }
 .item-icon {
@@ -441,8 +333,7 @@ body {
   <!-- 탭 -->
   <div class="tabs">
     <button class="tab active" data-tab="upcoming">⏰ 다가오는 관리</button>
-    <button class="tab" data-tab="all">📋 정기 관리</button>
-    <button class="tab" data-tab="stocks">📦 재고</button>
+    <button class="tab" data-tab="all">📋 전체 항목</button>
     <button class="tab" data-tab="repairs">🔧 수리 이력</button>
   </div>
 
@@ -464,15 +355,6 @@ body {
       </div>
     </div>
     <div id="allList"></div>
-  </div>
-
-  <!-- 재고 -->
-  <div class="tab-pane" id="pane-stocks" style="display:none;">
-    <div class="action-bar">
-      <h2>📦 생필품 재고</h2>
-      <button class="btn primary small" id="btnAddStock">+ 추가</button>
-    </div>
-    <div id="stocksList"></div>
   </div>
 
   <!-- 수리 이력 -->
@@ -517,6 +399,11 @@ body {
       </div>
     </div>
     <div class="field"><label>마지막 교체/점검일</label><input type="date" id="itemLastDate"></div>
+    <div class="field">
+      <label>📅 예정일자 직접 지정 (선택)</label>
+      <input type="date" id="itemNextDate">
+      <div style="font-size:11px;color:var(--text-tertiary);margin-top:4px;">지정하면 주기 계산 대신 <b>이 날짜</b>로 '다가오는 관리'에 잡혀요. 비우면 마지막일+주기로 자동 계산.</div>
+    </div>
     <div class="field"><label>메모 (선택)</label><textarea id="itemMemo" rows="2" placeholder="예: 코웨이 필터 / 매장 010-..."></textarea></div>
     <div class="actions">
       <button class="btn danger" id="btnDeleteItem" style="margin-right:auto;display:none;">삭제</button>
@@ -527,46 +414,6 @@ body {
 </div>
 
 <!-- 수리 추가/수정 모달 -->
-<!-- 재고 추가/수정 모달 -->
-<div class="modal-bg" id="modalStock">
-  <div class="modal">
-    <h3 id="stockTitle">재고 항목 추가</h3>
-    <div class="field"><label>이름 <span style="color:var(--text-tertiary);font-weight:400;font-size:11px;">(필수)</span></label><input id="stockName" placeholder="예: 샴푸"></div>
-    <div class="field-row">
-      <div class="field"><label>브랜드 <span style="color:var(--text-tertiary);font-weight:400;font-size:11px;">(선택)</span></label><input id="stockBrand" placeholder="예: 헤드앤숄더"></div>
-      <div class="field"><label>종류 <span style="color:var(--text-tertiary);font-weight:400;font-size:11px;">(선택)</span></label><input id="stockVariant" placeholder="예: 어른용 두피케어"></div>
-    </div>
-    <div class="field-row">
-      <div class="field">
-        <label>카테고리</label>
-        <select id="stockCategory">
-          <option value="bathroom">🛁 욕실</option>
-          <option value="kitchen">🍴 주방</option>
-          <option value="toilet">🚽 화장실</option>
-          <option value="laundry">🧺 세탁</option>
-          <option value="cleaning">🧹 청소</option>
-          <option value="baby">👶 아기용품</option>
-          <option value="medicine">💊 의약품</option>
-          <option value="other">📦 기타</option>
-        </select>
-      </div>
-      <div class="field"><label>단위</label><input id="stockUnit" placeholder="개" value="개"></div>
-    </div>
-    <div class="field"><label>보관 위치 (선택)</label><input id="stockLocation" placeholder="예: 욕실 거울장, 안방 서랍 2번"></div>
-    <div class="field-row">
-      <div class="field"><label>수량</label><input id="stockQuantity" type="number" min="1" value="1" inputmode="numeric"></div>
-      <div class="field"><label>유통기한 (선택)</label><input id="stockExpiryDate" type="date"></div>
-    </div>
-    <div class="field"><label>구매일 (선택)</label><input id="stockPurchaseDate" type="date"></div>
-    <div class="field"><label>메모 (선택)</label><input id="stockMemo" placeholder="예: 다이소에서 구매, 4500원"></div>
-    <div class="actions">
-      <button class="btn danger" id="btnDeleteStock" style="display:none;">삭제</button>
-      <button class="btn" onclick="closeModal('modalStock')">취소</button>
-      <button class="btn primary" id="btnSaveStock">저장</button>
-    </div>
-  </div>
-</div>
-
 <div class="modal-bg" id="modalRepair">
   <div class="modal">
     <h3 id="repairTitle">수리 이력 추가</h3>
@@ -648,11 +495,9 @@ const CATEGORY_LABELS = {
 let state = {
   items: [],
   repairs: [],
-  stocks: [],   // 생필품 재고: {id, name, brand, variant, category, location, quantity, unit, expiryDate, purchaseDate, memo, createdAt, lastChanged}
   currentTab: 'upcoming',
   editingItemId: null,
   editingRepairId: null,
-  editingStockId: null,
 };
 
 // 유틸
@@ -699,7 +544,6 @@ function save() {
   localStorage.setItem(STORAGE_KEY, JSON.stringify({
     items: state.items,
     repairs: state.repairs,
-    stocks: state.stocks,
   }));
 }
 
@@ -710,12 +554,16 @@ function load() {
     const data = JSON.parse(raw);
     if (Array.isArray(data.items)) state.items = data.items;
     if (Array.isArray(data.repairs)) state.repairs = data.repairs;
-    if (Array.isArray(data.stocks)) state.stocks = data.stocks;
   } catch(e) {}
 }
 
 // 다음 점검일 계산
 function calcNextDate(item) {
+  // 예정일자를 직접 지정했으면 그 날짜 우선
+  if (item.nextDate) {
+    const nd = new Date(item.nextDate);
+    if (!isNaN(nd.getTime())) return nd;
+  }
   if (!item.lastDate) return null;
   const d = new Date(item.lastDate);
   if (isNaN(d.getTime())) return null;
@@ -886,6 +734,7 @@ function markDone(id) {
   if (!item) return;
   confirmModal('완료 처리', `"${item.name}" 을(를) 오늘 날짜로 갱신할까요?`, () => {
     item.lastDate = isoDate(new Date());
+    item.nextDate = null; // 직접 지정 예정일 초기화 → 다음 주기부터 자동 계산
     save();
     renderAllSections();
     toast('✅ 완료 처리되었어요. 다음 일정이 갱신됐어요');
@@ -903,6 +752,7 @@ function openItemModal(id) {
     document.getElementById('itemCategory').value = item.category || 'other';
     document.getElementById('itemPeriod').value = String(item.periodMonths || 3);
     document.getElementById('itemLastDate').value = item.lastDate || '';
+    document.getElementById('itemNextDate').value = item.nextDate || '';
     document.getElementById('itemMemo').value = item.memo || '';
     document.getElementById('btnDeleteItem').style.display = '';
   } else {
@@ -911,6 +761,7 @@ function openItemModal(id) {
     document.getElementById('itemCategory').value = 'filter';
     document.getElementById('itemPeriod').value = '3';
     document.getElementById('itemLastDate').value = isoDate(new Date());
+    document.getElementById('itemNextDate').value = '';
     document.getElementById('itemMemo').value = '';
     document.getElementById('btnDeleteItem').style.display = 'none';
   }
@@ -927,6 +778,7 @@ document.getElementById('btnSaveItem').addEventListener('click', () => {
     category: document.getElementById('itemCategory').value,
     periodMonths: parseInt(document.getElementById('itemPeriod').value) || 3,
     lastDate: document.getElementById('itemLastDate').value || null,
+    nextDate: document.getElementById('itemNextDate').value || null,
     memo: document.getElementById('itemMemo').value.trim(),
   };
   if (state.editingItemId) {
@@ -1098,301 +950,6 @@ document.getElementById('btnDeleteRepair').addEventListener('click', () => {
   toast('삭제되었어요');
 });
 
-// ===== 재고 관리 =====
-const STOCK_CATEGORIES = {
-  bathroom: { icon: '🛁', label: '욕실' },
-  kitchen:  { icon: '🍴', label: '주방' },
-  toilet:   { icon: '🚽', label: '화장실' },
-  laundry:  { icon: '🧺', label: '세탁' },
-  cleaning: { icon: '🧹', label: '청소' },
-  baby:     { icon: '👶', label: '아기용품' },
-  medicine: { icon: '💊', label: '의약품' },
-  other:    { icon: '📦', label: '기타' },
-};
-function getStockCat(id) { return STOCK_CATEGORIES[id] || STOCK_CATEGORIES.other; }
-// 유통기한 상태: 'expired' | 'expiring' (30일 이내) | 'soon' (90일 이내) | 'ok' | 'none'
-function getExpiryStatus(s) {
-  if (!s.expiryDate) return 'none';
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  const exp = new Date(s.expiryDate);
-  if (isNaN(exp.getTime())) return 'none';
-  const days = Math.ceil((exp - today) / 86400000);
-  if (days < 0) return 'expired';
-  if (days <= 30) return 'expiring';
-  if (days <= 90) return 'soon';
-  return 'ok';
-}
-// 유통기한까지 남은 일수 (정렬용). 무기한이면 Infinity. 만료됐으면 음수.
-function getDaysToExpiry(s) {
-  if (!s.expiryDate) return Infinity;
-  const today = new Date(); today.setHours(0,0,0,0);
-  const exp = new Date(s.expiryDate);
-  if (isNaN(exp.getTime())) return Infinity;
-  return Math.ceil((exp - today) / 86400000);
-}
-// 가장 심각한 상태 (만료 > 임박 > 정상). 수량은 0 되면 자동 삭제되므로 고려 안 함.
-function getOverallStatus(s) {
-  const exp = getExpiryStatus(s);
-  if (exp === 'expired') return 'critical';
-  if (exp === 'expiring') return 'warning';
-  return 'ok';
-}
-// 유통기한 표시: 항상 의미 있는 텍스트 반환 (무기한이면 빈 문자열)
-function fmtExpiry(s) {
-  if (!s.expiryDate) return '';
-  const today = new Date(); today.setHours(0,0,0,0);
-  const exp = new Date(s.expiryDate);
-  if (isNaN(exp.getTime())) return '';
-  const days = Math.ceil((exp - today) / 86400000);
-  if (days < 0) return `🚫 ${-days}일 경과`;
-  if (days === 0) return '⏰ 오늘 만료';
-  if (days <= 30) return `⏰ D-${days}`;
-  if (days <= 60) return `${days}일 남음`;
-  const years = Math.floor(days / 365);
-  const months = Math.floor((days % 365) / 30);
-  if (years > 0 && months > 0) return `${years}년 ${months}개월 남음`;
-  if (years > 0) return `${years}년 남음`;
-  return `${months || 1}개월 남음`;
-}
-// 정렬 함수: 유통기한 짧게 남은 순 (만료된 거 먼저, 무기한은 끝)
-function sortByExpiry(a, b) {
-  const da = getDaysToExpiry(a);
-  const db = getDaysToExpiry(b);
-  if (da !== db) return da - db;
-  const n = (a.name || '').localeCompare(b.name || '');
-  if (n !== 0) return n;
-  return ((a.brand || '') + (a.variant || '')).localeCompare((b.brand || '') + (b.variant || ''));
-}
-
-function renderStocks() {
-  const wrap = document.getElementById('stocksList');
-  const stocks = state.stocks || [];
-
-  if (stocks.length === 0) {
-    wrap.innerHTML = `<div class="stock-empty-state">📦 등록된 재고가 없어요<br><br>
-      + 추가 버튼을 눌러 첫 항목을 등록하세요<br><br>
-      <span style="font-size:11px;">예: 샴푸, 휴지, 세탁세제, 화장솜, 비타민...</span></div>`;
-    return;
-  }
-
-  // 통합 상태로 분리 (critical: 만료, warning: 임박, ok: 정상)
-  const critical = stocks.filter(s => getOverallStatus(s) === 'critical');
-  const warning = stocks.filter(s => getOverallStatus(s) === 'warning');
-  const ok = stocks.filter(s => getOverallStatus(s) === 'ok');
-
-  let html = '';
-
-  // 만료/임박 항목 먼저 (유통기한 짧은 순)
-  if (critical.length > 0 || warning.length > 0) {
-    const labelParts = [];
-    if (critical.length > 0) labelParts.push(`만료 ${critical.length}개`);
-    if (warning.length > 0) labelParts.push(`임박 ${warning.length}개`);
-    const urgentSorted = [...critical, ...warning].sort(sortByExpiry);
-    html += `<div class="stock-group">
-      <div class="stock-group-header">🚨 확인 필요 <span class="count">(${labelParts.join(' · ')})</span></div>
-      <div class="stock-grid">${urgentSorted.map(stockCardHTML).join('')}</div>
-    </div>`;
-  }
-
-  // 카테고리별 그룹화 (정상 항목만)
-  const byCategory = {};
-  ok.forEach(s => {
-    const cat = s.category || 'other';
-    if (!byCategory[cat]) byCategory[cat] = [];
-    byCategory[cat].push(s);
-  });
-  Object.keys(STOCK_CATEGORIES).forEach(catId => {
-    const items = byCategory[catId];
-    if (!items || items.length === 0) return;
-    const c = getStockCat(catId);
-
-    // 카테고리 안에서 이름별로 다시 그룹화
-    const byName = {};
-    items.forEach(s => {
-      const key = (s.name || '').trim();
-      if (!byName[key]) byName[key] = [];
-      byName[key].push(s);
-    });
-    // 각 이름 그룹 안에서 유통기한 짧은 순 정렬
-    Object.keys(byName).forEach(name => {
-      byName[name].sort(sortByExpiry);
-    });
-    // 이름 그룹들 정렬: 가장 임박한 항목 기준으로 (시급한 그룹 먼저)
-    const nameKeys = Object.keys(byName).sort((a, b) => {
-      const da = getDaysToExpiry(byName[a][0]);
-      const db = getDaysToExpiry(byName[b][0]);
-      if (da !== db) return da - db;
-      return a.localeCompare(b);
-    });
-
-    let bodyHtml = '';
-    nameKeys.forEach(name => {
-      const group = byName[name];
-      const totalQty = group.reduce((s, x) => s + (Number(x.quantity) || 0), 0);
-      const unit = group[0].unit || '개';
-      // 같은 이름이 2개 이상이면 그룹 헤더 표시
-      if (group.length >= 2) {
-        bodyHtml += `<div class="stock-namegroup">
-          <div class="stock-namegroup-header">
-            ${escapeHtml(name)}
-            <span class="total">${group.length}종 · 총 ${totalQty}${unit}</span>
-          </div>
-          <div class="stock-grid">${group.map(stockCardHTML).join('')}</div>
-        </div>`;
-      } else {
-        bodyHtml += `<div class="stock-namegroup">
-          <div class="stock-grid">${group.map(stockCardHTML).join('')}</div>
-        </div>`;
-      }
-    });
-
-    html += `<div class="stock-group">
-      <div class="stock-group-header">${c.icon} ${c.label} <span class="count">(${items.length}개)</span></div>
-      ${bodyHtml}
-    </div>`;
-  });
-
-  wrap.innerHTML = html;
-}
-
-function stockCardHTML(s) {
-  const exp = getExpiryStatus(s);
-  // 유통기한 상태로 카드 색상 결정
-  let cardCls = '';
-  if (exp === 'expired') cardCls = ' expired';
-  else if (exp === 'expiring') cardCls = ' expiring';
-
-  // 유통기한 배지 (있으면 항상 표시)
-  let expBadge = '';
-  const expText = fmtExpiry(s);
-  if (expText) {
-    const expCls = exp === 'expired' ? 'expired' : exp === 'expiring' ? 'expiring' : 'ok';
-    expBadge = `<div class="expiry ${expCls}">${expText}</div>`;
-  }
-
-  // 서브 라벨 (브랜드 + 종류)
-  const subParts = [];
-  if (s.brand) subParts.push(escapeHtml(s.brand));
-  if (s.variant) subParts.push(escapeHtml(s.variant));
-  const subname = subParts.length > 0 ? `<div class="subname">${subParts.join(' · ')}</div>` : '';
-
-  const unit = s.unit || '개';
-
-  return `
-    <div class="stock-card${cardCls}" data-id="${s.id}">
-      <div class="name">${escapeHtml(s.name)}</div>
-      ${subname}
-      ${s.location ? `<div class="location">📍 ${escapeHtml(s.location)}</div>` : ''}
-      ${expBadge}
-      <div class="qty-row">
-        <button class="qty-btn minus" onclick="changeStockQty('${s.id}', -1)" aria-label="감소">−</button>
-        <span class="qty-num">${s.quantity || 0}</span>
-        <span class="qty-unit">${escapeHtml(unit)}</span>
-        <button class="qty-btn plus" onclick="changeStockQty('${s.id}', +1)" aria-label="증가">+</button>
-      </div>
-      ${s.memo ? `<div class="memo">${escapeHtml(s.memo)}</div>` : ''}
-      <button class="edit-btn" onclick="openStockModal('${s.id}')">✏️ 편집</button>
-    </div>
-  `;
-}
-
-window.changeStockQty = function(id, delta) {
-  const s = state.stocks.find(x => x.id === id);
-  if (!s) return;
-  const newQty = Math.max(0, (Number(s.quantity) || 0) + delta);
-  if (newQty === 0) {
-    // 자동 삭제 (다 썼다는 의미)
-    const name = s.name;
-    state.stocks = state.stocks.filter(x => x.id !== id);
-    save();
-    renderAllSections();
-    toast(`"${name}" 다 떨어져서 삭제했어요`);
-    return;
-  }
-  s.quantity = newQty;
-  s.lastChanged = isoDate(new Date());
-  save();
-  renderAllSections();
-};
-
-window.openStockModal = function(id) {
-  state.editingStockId = id || null;
-  if (id) {
-    const s = state.stocks.find(x => x.id === id);
-    if (!s) return;
-    document.getElementById('stockTitle').textContent = '재고 항목 수정';
-    document.getElementById('stockName').value = s.name || '';
-    document.getElementById('stockBrand').value = s.brand || '';
-    document.getElementById('stockVariant').value = s.variant || '';
-    document.getElementById('stockCategory').value = s.category || 'other';
-    document.getElementById('stockUnit').value = s.unit || '개';
-    document.getElementById('stockLocation').value = s.location || '';
-    document.getElementById('stockQuantity').value = s.quantity || 1;
-    document.getElementById('stockExpiryDate').value = s.expiryDate || '';
-    document.getElementById('stockPurchaseDate').value = s.purchaseDate || '';
-    document.getElementById('stockMemo').value = s.memo || '';
-    document.getElementById('btnDeleteStock').style.display = '';
-  } else {
-    document.getElementById('stockTitle').textContent = '재고 항목 추가';
-    document.getElementById('stockName').value = '';
-    document.getElementById('stockBrand').value = '';
-    document.getElementById('stockVariant').value = '';
-    document.getElementById('stockCategory').value = 'bathroom';
-    document.getElementById('stockUnit').value = '개';
-    document.getElementById('stockLocation').value = '';
-    document.getElementById('stockQuantity').value = 1;
-    document.getElementById('stockExpiryDate').value = '';
-    document.getElementById('stockPurchaseDate').value = '';
-    document.getElementById('stockMemo').value = '';
-    document.getElementById('btnDeleteStock').style.display = 'none';
-  }
-  showModal('modalStock');
-};
-
-document.getElementById('btnAddStock').addEventListener('click', () => openStockModal());
-
-document.getElementById('btnSaveStock').addEventListener('click', () => {
-  const name = document.getElementById('stockName').value.trim();
-  if (!name) return toast('이름을 입력해주세요');
-  const data = {
-    name,
-    brand: document.getElementById('stockBrand').value.trim(),
-    variant: document.getElementById('stockVariant').value.trim(),
-    category: document.getElementById('stockCategory').value,
-    unit: document.getElementById('stockUnit').value.trim() || '개',
-    location: document.getElementById('stockLocation').value.trim(),
-    quantity: Math.max(1, Number(document.getElementById('stockQuantity').value) || 1),
-    expiryDate: document.getElementById('stockExpiryDate').value || '',
-    purchaseDate: document.getElementById('stockPurchaseDate').value || '',
-    memo: document.getElementById('stockMemo').value.trim(),
-    lastChanged: isoDate(new Date()),
-  };
-  if (state.editingStockId) {
-    const s = state.stocks.find(x => x.id === state.editingStockId);
-    if (s) Object.assign(s, data);
-  } else {
-    state.stocks.push({ id: uid(), createdAt: isoDate(new Date()), ...data });
-  }
-  save();
-  renderAllSections();
-  closeModal('modalStock');
-  toast('저장되었어요');
-});
-
-document.getElementById('btnDeleteStock').addEventListener('click', () => {
-  if (!state.editingStockId) return;
-  const s = state.stocks.find(x => x.id === state.editingStockId);
-  if (!s) return;
-  confirmModal('재고 삭제', `"${s.name}"을(를) 삭제하시겠어요?`, () => {
-    state.stocks = state.stocks.filter(x => x.id !== state.editingStockId);
-    save();
-    renderAllSections();
-    closeModal('modalStock');
-    toast('삭제되었어요');
-  });
-});
-
 // 탭 전환
 document.querySelectorAll('.tab').forEach(tab => {
   tab.addEventListener('click', () => {
@@ -1408,7 +965,6 @@ function renderAllSections() {
   renderSummary();
   if (state.currentTab === 'upcoming') renderUpcoming();
   else if (state.currentTab === 'all') renderAll();
-  else if (state.currentTab === 'stocks') renderStocks();
   else if (state.currentTab === 'repairs') renderRepairs();
 }
 
