@@ -3219,52 +3219,47 @@ const ADMIN_TASKS = [
   { id:'car_seat',     title:'카시트 장착 확인 (퇴원 전)',    when:'퇴원 전',        how:'' },
   { id:'company_leave',title:'출산휴가·육아휴직 신고',        when:'해당 시',        how:'회사 인사팀 · 고용보험 급여 신청' },
 ];
-// 대구분(개월: mFrom~mTo) → 중구분(주차: w, 초기엔 wFrom~wTo 주로 '이번 주' 강조)
+// 주차별 가이드 (1~26주). 날짜는 자녀 생년월일로 자동 계산, 수유량은 성장 탭의 실제 체중으로 재계산 표시.
+// 대구분(개월: mFrom~mTo) → 중구분(주차: wFrom~wTo = 출생 후 경과 주, 0부터)
+const GUIDE_NOTE = '깨시 = 깨어있을 수 있는 시간(먹는 시간 포함). 이 시간 넘기면 과피로로 오히려 못 잠. 모든 수치는 평균이라 ±2주 편차는 정상 — 아기 컨디션이 항상 우선. 수유량 공식: 하루 총량 = 몸무게×170ml, 1회량 = 총량÷횟수 (몸무게 6kg 넘으면 1,000ml 안팎 상한).';
 const GUIDE = [
-  { mFrom:0, mTo:1, label:'0개월 · 신생아', weeks:[
-    { w:'1주', wFrom:0, wTo:1, feed:'1회 30~60ml · 하루 8~12회(2~3시간마다)', play:'피부 맞대기, 20~30cm 눈맞춤, 밝은 빛에 반응', grow:'생리적 체중감소→회복, 하루 16~20시간 수면, 배꼽·황달 관찰' },
-    { w:'2주', wFrom:1, wTo:2, feed:'1회 60~80ml · 하루 8~10회', play:'얼굴 응시, 소리에 놀람반사', grow:'출생체중 회복 · 1차 영유아 건강검진(14~35일)' },
-    { w:'3주', wFrom:2, wTo:3, feed:'1회 70~90ml', play:'짧은 각성 시간에 안고 말 걸기', grow:'영아산통(저녁 배앓이·울음) 시작될 수 있음' },
-    { w:'4주', wFrom:3, wTo:4, feed:'1회 80~100ml · 하루 7~8회', play:'잠깐 눈맞춤 유지, 흑백 모빌', grow:'엎드려 목 살짝 들기 · BCG·B형간염 2차' },
+  { mFrom:0, mTo:1, label:'0개월 (1~4주)', weeks:[
+    { w:'1주', wFrom:0, wTo:1, feedN:8, weight:'3.2~3.4kg (생리적 감소로 3.0kg 근처까지 빠졌다 회복 — 정상)', feed:'총 500~550ml / 하루 8회+ / 1회 60~70ml (첫 주는 위가 작아 공식보다 적게 먹어도 정상)', wake:'40~50분', nap:'수시 (하루 총 수면 16~18h)', notes:['먹고 → 기저귀 → 바로 잠. 밤낮 구분 없음(정상). 2~3시간마다 수유','배꼽 건조 중, 딸꾹질·재채기·그르렁 다 정상'], tip:'속싸개 단단히, 낮엔 밝게 밤엔 어둡게 — 밤낮 구분의 씨앗 심기' },
+    { w:'2주', wFrom:1, wTo:2, feedN:8, weight:'3.4~3.5kg (출생체중 회복이 이번 주 미션)', feed:'총 560~600ml / 8회 / 1회 70~75ml', wake:'45~60분', nap:'수시', notes:['첫 급성장기 가능 — 갑자기 자주 찾고 보채면 그것'], tip:'초점책 하루 2~3번 1~2분, 눕힐 때 고개 방향 번갈아' },
+    { w:'3주', wFrom:2, wTo:3, feedN:7.5, weight:'3.7~3.8kg (하루 +33~35g, 주당 +250g 페이스 시작)', feed:'총 630~650ml / 7~8회 / 1회 80~90ml', wake:'45~60분', nap:'수시', notes:['급성장기: 수유량 확 늘 수 있음 — 정상','저녁 마녀시간 시작될 수 있음','밤낮 구분 훈련 시작: 목욕(22:30경) → 막수 든든히 → 밤잠 루틴 얹기'], tip:'탯줄 떨어질 시기 — 떨어진 후 통목욕 가능' },
+    { w:'4주', wFrom:3, wTo:4, feedN:7.5, weight:'4.0~4.1kg', feed:'총 680~700ml / 7~8회 / 1회 85~95ml', wake:'60분', nap:'수시', notes:['통잠(3~4h 덩어리)을 밤 시간대로 배치하는 연습 — 꿈수(새벽 2~3시 잠결 수유) 시도 가능','터미타임 하루 2~3회 1~2분 시작'], admin:'BCG 접종(4주 이내), 영유아검진 1차(14~35일)' },
   ]},
-  { mFrom:1, mTo:2, label:'1개월', weeks:[
-    { w:'5~6주', wFrom:4, wTo:6, feed:'1회 90~120ml', play:'사회적 미소 시작, "아·우" 옹알이', grow:'각성 시간이 늘어남' },
-    { w:'7~8주', wFrom:6, wTo:8, feed:'1회 100~120ml · 하루 6~7회', play:'소리 나는 쪽 쳐다봄, 딸랑이 반응', grow:'2개월 예방접종(DTaP·폴리오·Hib·PCV·로타 1차)' },
+  { mFrom:1, mTo:2, label:'1개월 (5~8주)', weeks:[
+    { w:'5주', wFrom:4, wTo:5, feedN:7, weight:'4.4~4.5kg', feed:'총 750ml / 7회 / 1회 100~110ml', wake:'60분', nap:'수시', notes:['원더윅스 1차 도약(감각의 변화) — 잠 안 자고 보채면 도약 중'], tip:'많이 안아줘도 버릇 안 나빠지는 시기' },
+    { w:'6주', wFrom:5, wTo:6, feedN:7, weight:'4.7~4.8kg', feed:'총 800ml / 7회 / 1회 110~115ml', wake:'60~75분', nap:'수시', notes:['급성장기 2차. 마녀시간 피크(6주 정점 후 감소)','사회적 미소 등장','산모: 6주 산후검진'] },
+    { w:'7주', wFrom:6, wTo:7, feedN:6.5, weight:'5.0~5.1kg', feed:'총 850ml / 6~7회 / 1회 120~140ml', wake:'60~75분', nap:'수시', notes:['"아~ 우~" 옹알이 시작'], tip:'흑백에서 빨강 섞인 자극으로 확장' },
+    { w:'8주', wFrom:7, wTo:8, feedN:6.5, weight:'5.2~5.4kg (출생체중의 약 1.7배)', feed:'총 880~900ml / 6~7회 / 1회 130~145ml', wake:'75~90분', nap:'4~5회로 정리', notes:['원더윅스 2차 도약(패턴 인식)','밤 통잠 4~5시간으로 늘어나는 아기 등장(아니어도 정상)'], admin:'2개월 접종 예약(6가·폐렴구균·로타 1차)' },
   ]},
-  { mFrom:2, mTo:3, label:'2개월', weeks:[
-    { w:'9~10주', wFrom:8, wTo:10, feed:'1회 120~150ml · 하루 6회', play:'손 발견해 빨기, 마주보고 옹알이 주고받기', grow:'목 가누기 발달' },
-    { w:'11~12주', wFrom:10, wTo:12, feed:'1회 120~150ml', play:'엎드려 가슴 들기, 잡아주면 뒤집기 시도', grow:'밤잠이 길어지기 시작' },
+  { mFrom:2, mTo:3, label:'2개월 (9~12주)', weeks:[
+    { w:'9주', wFrom:8, wTo:9, feedN:6, weight:'5.4~5.6kg', feed:'총 930~950ml / 6회 / 1회 150~160ml', wake:'75~90분', nap:'4~5회', notes:['2개월 접종 주간. 당일 미열·처짐 가능','모빌 추적 능숙 — 천천히 움직여주기'] },
+    { w:'10주', wFrom:9, wTo:10, feedN:6, weight:'5.6~5.8kg', feed:'총 950~980ml / 6회 / 1회 155~165ml', wake:'90분', nap:'4~5회', notes:['자기 손 발견 — 뚫어지게 보는 시기'], tip:'딸랑이 쥐여주기 시작' },
+    { w:'11주', wFrom:10, wTo:11, feedN:6, weight:'5.8~6.0kg (증가 속도 하루 +20g대로 완만해짐 — 정상)', feed:'총 1,000ml 근처 도달 / 6회 / 1회 160~170ml — 여기서부터 총량 상한 구간', wake:'90분', nap:'30~45분 토막잠 정상', notes:['목 가누기 진행 — 터미타임 3~5분 × 3~5회'] },
+    { w:'12주', wFrom:11, wTo:12, feedN:5.5, weight:'6.0~6.2kg', feed:'총 1,000ml 안팎 유지 / 5~6회 / 1회 170~200ml', wake:'90분~1.75h', nap:'4회 안팎', notes:['원더윅스 3차 도약 + 3개월 급성장기','50~100일 통잠 조짐 구간'], tip:'밤잠 루틴 고정(목욕 → 수유 → 어둡게 → 눕히기)' },
   ]},
-  { mFrom:3, mTo:4, label:'3개월', weeks:[
-    { w:'전체', feed:'1회 120~160ml · 하루 5~6회', play:'양손 모으기, 물건 향해 손 뻗기, 소리내 웃기', grow:'목을 완전히 가눔' },
+  { mFrom:3, mTo:4, label:'3개월 (13~16주)', weeks:[
+    { w:'13~14주', wFrom:12, wTo:14, feedN:5.5, weight:'6.2~6.5kg (100일 무렵 출생체중 2배)', feed:'총 1,000ml 안팎 / 5~6회 / 1회 180~200ml', wake:'1.5~2h', nap:'4회 안팎', notes:['100일! 목 가누기 완성 단계, 뒤통수 모양 체크','장난감 입으로 — 세척 루틴 시작'] },
+    { w:'15~16주', wFrom:14, wTo:16, feedN:5, weight:'6.6~7.0kg', feed:'총 900~1,000ml / 5회 / 1회 180~200ml (총량 늘지 않아도 체중 늘면 정상)', wake:'1.75~2h', nap:'3~4회', notes:['4개월 수면퇴행 가능 구간 — 2~6주면 지나감'], admin:'4개월 접종 2차, 영유아검진 2차' },
   ]},
-  { mFrom:4, mTo:5, label:'4개월', weeks:[
-    { w:'전체', feed:'1회 150~180ml · 하루 5회 (이유식 준비 신호 관찰)', play:'뒤집기(등→배), 잡은 것 입으로, 거울 반응', grow:'2·4개월 접종 · 2차 건강검진 시기' },
+  { mFrom:4, mTo:5, label:'4개월 (17~19주)', weeks:[
+    { w:'17~19주', wFrom:16, wTo:19, feedN:5, weight:'7.0~7.3kg', feed:'총 900~1,000ml / 5회 / 1회 180~210ml', wake:'2h', nap:'3회', notes:['원더윅스 4차 도약 — 4개월 퇴행과 겹치면 폭풍의 시기','뒤집기 시도~성공. 낙상 주의'] },
   ]},
-  { mFrom:5, mTo:6, label:'5개월', weeks:[
-    { w:'전체', feed:'1회 160~200ml + 초기 이유식 시작 가능(만 4~6개월)', play:'지지하면 앉기, 발 잡고 놀기', grow:'이앓이·침 많아짐' },
+  { mFrom:5, mTo:6, label:'5개월 (20~23주)', weeks:[
+    { w:'20~22주', wFrom:19, wTo:22, feedN:4.5, weight:'7.3~7.6kg', feed:'총 900~1,000ml / 4~5회 / 1회 200~220ml', wake:'2~2.25h', nap:'3회', notes:['이름 부르면 돌아보기, 까꿍놀이 반응 폭발','이유식 준비: 소아과 상담, 도구 준비'] },
+    { w:'23주', wFrom:22, wTo:23, feedN:4.5, weight:'7.5~7.7kg', feed:'총 900~1,000ml / 4~5회 / 1회 200~220ml', wake:'2~2.5h', nap:'2~3회 (총 3~4.5h) · 1·2회차 1~1.5h, 3회차 30~45분 (2회 전환 준비)', notes:['엄마 곁 표현 시작 → 잠 안 자기, 낯가리기 등','호기심 증가, 손·손가락 많이 쓰게 하기','힘들게 하면 도약 준비라 생각하고 기쁘게 받아들이자'] },
   ]},
-  { mFrom:6, mTo:7, label:'6개월', weeks:[
-    { w:'전체', feed:'이유식 1~2회(미음·죽) + 분유 600~800ml/일', play:'혼자 잠깐 앉기, 손바꿔 쥐기, 낯가림 시작', grow:'첫니 나기 시작' },
+  { mFrom:6, mTo:7, label:'6개월 (24~26주)', weeks:[
+    { w:'24~26주', wFrom:23, wTo:26, feedN:4.5, weight:'7.7~7.9kg (6개월 = 출생체중 2.5배 근처. 이후 1년까지 +2kg만 — 느려지는 게 정상)', feed:'분유 800~1,000ml / 4~5회 + 이유식 시작(쌀미음 1일 1회부터). 이유식 후에도 분유가 주식', wake:'2.25~2.5h', nap:'2~3회', notes:['원더윅스 5차 도약 — 낯가림 본격화(건강한 애착의 증거)','뒤집기 자유자재 → 배밀이 준비. 바닥 환경 정리'], admin:'6개월 접종 3차 + 인플루엔자' },
   ]},
-  { mFrom:7, mTo:9, label:'7~8개월', weeks:[
-    { w:'전체', feed:'이유식 2회(중기·으깬형) + 분유 500~700ml', play:'기어가기, 까꿍놀이, 이름 부르면 반응', grow:'붙잡고 서기 시도' },
-  ]},
-  { mFrom:9, mTo:12, label:'9~11개월', weeks:[
-    { w:'전체', feed:'이유식 3회(후기·진밥) + 분유 500ml + 손가락 음식', play:'붙잡고 걷기, 짝짜꿍·빠이빠이, 컵쌓기', grow:'3차 건강검진 · 첫 단어 준비' },
-  ]},
-  { mFrom:12, mTo:15, label:'12~14개월', weeks:[
-    { w:'전체', feed:'유아식 + 생우유 400~500ml/일', play:'혼자 걷기, 첫 단어, 블록 쌓기', grow:'MMR·수두·A형간염·일본뇌염 접종' },
-  ]},
-  { mFrom:15, mTo:18, label:'15~17개월', weeks:[
-    { w:'전체', feed:'하루 3끼 + 간식 2회', play:'크레용 끄적이기, 컵으로 마시기, 간단한 지시 따르기', grow:'어휘 늘기(10~20단어)' },
-  ]},
-  { mFrom:18, mTo:24, label:'18~23개월', weeks:[
-    { w:'전체', feed:'가족 식사 위주', play:'두 단어 문장, 계단 오르기, 역할놀이', grow:'4차 건강검진 · 구강검진 1차' },
-  ]},
-  { mFrom:24, mTo:999, label:'24개월~', weeks:[
-    { w:'전체', feed:'가족 식사 + 균형 간식', play:'뛰기, 세 단어 문장, 색·모양 구분', grow:'배변훈련 시작 시기' },
-  ]},
+];
+const GUIDE_REF = [
+  { t:'🍼 수유량 보는 법', items:['공식(×170)은 출발점. 아기가 남기거나 더 찾으면 아기가 맞음 — 공식에 아기를 맞추지 말 것','1회량 늘리는 신호: 다 먹고도 젖병 놓지 않고 빰, 수유 간격이 계속 짧아짐 → 10~20ml씩 증량','토 자주 하면 1회량 과다일 수 있음 → 1회량 줄이고 횟수 유지','주 1회 체중 체크(수유 전·맨몸) → 주당 +250g(첫 2~3개월) 근처면 양이 맞다는 뜻','3개월 이후 주당 증가가 150g대로 떨어지는 건 정상 감속이지 수유 부족 아님'] },
+  { t:'⚖️ 몸무게 보는 법', items:['25~50백분위 라인 따라가면 완벽','진짜 지표 셋: ① 꾸준히 우상향 ② 소변 기저귀 하루 6개+ ③ 잘 먹고 잘 잠','2주 이상 정체·감소 시에만 소아과 상담'] },
+  { t:'🧠 항상 기억할 것', items:['깨시 넘기면 과피로 → 더 못 잠. 시계보다 아기 신호(하품, 눈 비비기, 멍때리기)','도약·급성장기·수면퇴행 = 전부 지나감','주차별 수치는 평균. 우리 아기만의 속도가 정답'] },
 ];
 function babyAgeMonths(){
   const k = getKid(); if (!k || !k.birthDate) return null;
@@ -3313,41 +3308,88 @@ function babyAgeWeeks(){
 let guideOpen = null;
 window.toggleGuideMonth = (gi) => { guideOpen = (guideOpen === gi) ? -1 : gi; renderAgeGuide(); };
 function renderAgeGuide(){
+  const k = getKid();
   const am = babyAgeMonths(), aw = babyAgeWeeks();
-  // 현재 대구분(개월) 인덱스
-  let curIdx = -1;
+  const birth = (k && k.birthDate) ? new Date(k.birthDate) : null;
+  const fmtMD = (d) => `${d.getMonth()+1}/${d.getDate()}`;
+  // 주차의 실제 날짜 범위 (생년월일 기준 자동 계산)
+  const weekRange = (w) => {
+    if (!birth || isNaN(birth.getTime()) || w.wFrom == null) return '';
+    const s = new Date(birth); s.setDate(s.getDate() + w.wFrom * 7);
+    const e = new Date(birth); e.setDate(e.getDate() + w.wTo * 7 - 1);
+    return `${fmtMD(s)}~${fmtMD(e)}`;
+  };
+  // 성장 탭 최근 몸무게
+  let latestW = null;
+  if (k) {
+    const gs = (state.growth || []).filter(x => x.kidId === k.id && Number(x.weight) > 0)
+      .sort((a, b) => (b.date || '').localeCompare(a.date || ''));
+    if (gs.length) latestW = Number(gs[0].weight);
+  }
+  // 현재 대구분(개월)·주차
+  let curIdx = -1, curWeek = null;
   if (am != null && am >= 0){
     curIdx = GUIDE.findIndex(g => am >= g.mFrom && am < g.mTo);
     if (curIdx < 0 && am >= GUIDE[GUIDE.length-1].mFrom) curIdx = GUIDE.length - 1;
   }
+  if (curIdx >= 0 && aw != null && aw >= 0) curWeek = GUIDE[curIdx].weeks.find(w => w.wFrom != null && aw >= w.wFrom && aw < w.wTo) || null;
   if (guideOpen == null) guideOpen = curIdx >= 0 ? curIdx : 0;
-  document.getElementById('ageGuide').innerHTML = GUIDE.map((g, gi) => {
+
+  // 상단: 안내 + 실제 체중 기반 수유량 계산
+  let head = `<div style="font-size:11.5px;color:var(--text-secondary);background:#F8FAFC;border:1px solid var(--border);border-radius:10px;padding:10px 12px;margin-bottom:10px;line-height:1.6;">${escapeHtml(GUIDE_NOTE)}</div>`;
+  if (latestW) {
+    let total = latestW * 170;
+    const capped = latestW >= 6;
+    if (capped) total = Math.min(total, 1000);
+    const n = (curWeek && curWeek.feedN) ? curWeek.feedN : 6;
+    const per = Math.round(total / n);
+    head += `<div style="background:#FFF7ED;border:1px solid #FDBA74;border-radius:10px;padding:10px 12px;margin-bottom:12px;font-size:12.5px;line-height:1.6;">
+      🧮 <b>실제 체중 기준</b> · 최근 몸무게 <b>${latestW}kg</b> → 하루 총 <b>약 ${Math.round(total)}ml</b>${capped ? ' (상한 1,000ml 적용)' : ' (×170 공식)'} · ${curWeek ? `이번 주 ${n}회 기준 1회 <b>약 ${per}ml</b>` : `1회 약 ${per}ml (하루 ${n}회 기준)`}
+      <div style="font-size:11px;color:var(--text-tertiary);margin-top:3px;">매주 체중을 성장 탭에 기록하면 자동으로 다시 계산돼요. 아기가 더 찾거나 남기면 아기가 맞음.</div>
+    </div>`;
+  } else {
+    head += `<div style="font-size:11.5px;color:var(--text-tertiary);margin-bottom:12px;">💡 <b>성장 탭에 몸무게</b>를 기록하면 실제 체중 기준 수유량(×170 공식)을 자동 계산해줘요.</div>`;
+  }
+
+  const body = GUIDE.map((g, gi) => {
     const isCur = gi === curIdx;
     const open = gi === guideOpen;
     const weeksHtml = g.weeks.map(w => {
       const wCur = isCur && w.wFrom != null && aw != null && aw >= 0 && aw >= w.wFrom && aw < w.wTo;
-      return `<div style="border-top:1px solid var(--border);padding:10px 0;">
-        <div style="font-size:12px;font-weight:700;color:${wCur?'#EA580C':'var(--text-secondary)'};margin-bottom:5px;">${w.w}${wCur?' <span style="font-size:10px;color:#fff;background:#EA580C;padding:1px 7px;border-radius:999px;">이번 주</span>':''}</div>
-        <div style="display:grid;gap:4px;font-size:12px;line-height:1.5;">
-          <div>🍼 <b>수유</b> · ${escapeHtml(w.feed)}</div>
-          <div>🧸 <b>놀이/발달</b> · ${escapeHtml(w.play)}</div>
-          <div>📈 <b>성장</b> · ${escapeHtml(w.grow)}</div>
-        </div>
+      const rows = [];
+      if (w.weight) rows.push(`<div>⚖️ <b>표준 몸무게</b> · ${escapeHtml(w.weight)}</div>`);
+      if (w.feed)   rows.push(`<div>🍼 <b>수유</b> · ${escapeHtml(w.feed)}</div>`);
+      if (w.wake || w.nap) rows.push(`<div>⏰ <b>깨시 Max</b> · ${escapeHtml(w.wake || '-')} &nbsp;·&nbsp; 💤 <b>낮잠</b> · ${escapeHtml(w.nap || '-')}</div>`);
+      (w.notes || []).forEach(n => rows.push(`<div>📌 ${escapeHtml(n)}</div>`));
+      if (w.admin)  rows.push(`<div>🏥 <b>행정/접종</b> · ${escapeHtml(w.admin)}</div>`);
+      if (w.tip)    rows.push(`<div>💡 <b>팁</b> · ${escapeHtml(w.tip)}</div>`);
+      const range = weekRange(w);
+      return `<div style="border-top:1px solid var(--border);padding:10px 14px;margin:0 -14px;${wCur ? 'background:#FFFBEB;' : ''}">
+        <div style="font-size:12.5px;font-weight:700;color:${wCur ? '#EA580C' : 'var(--text)'};margin-bottom:6px;">${w.w}${range ? ` <span style="font-weight:400;color:var(--text-tertiary);font-size:11px;">(${range})</span>` : ''}${wCur ? ' <span style="font-size:10px;color:#fff;background:#EA580C;padding:1px 7px;border-radius:999px;">이번 주</span>' : ''}</div>
+        <div style="display:grid;gap:4px;font-size:12px;line-height:1.55;">${rows.join('')}</div>
       </div>`;
     }).join('');
-    return `<div style="border:1px solid ${isCur?'#FDBA74':'var(--border)'};border-radius:12px;margin-bottom:8px;overflow:hidden;">
-      <button onclick="toggleGuideMonth(${gi})" style="width:100%;text-align:left;background:${isCur?'#FFF7ED':'#fff'};border:none;padding:12px 14px;cursor:pointer;display:flex;justify-content:space-between;align-items:center;font-family:inherit;">
-        <span style="font-size:13px;font-weight:700;color:${isCur?'#9A3412':'var(--text)'};">${g.label}${isCur?' <span style="font-size:10px;color:#fff;background:#EA580C;padding:2px 8px;border-radius:999px;margin-left:4px;">지금</span>':''}</span>
-        <span style="color:var(--text-tertiary);font-size:12px;">${open?'▲ 접기':'▼ 펼치기'}</span>
+    return `<div style="border:1px solid ${isCur ? '#FDBA74' : 'var(--border)'};border-radius:12px;margin-bottom:8px;overflow:hidden;">
+      <button onclick="toggleGuideMonth(${gi})" style="width:100%;text-align:left;background:${isCur ? '#FFF7ED' : '#fff'};border:none;padding:12px 14px;cursor:pointer;display:flex;justify-content:space-between;align-items:center;font-family:inherit;">
+        <span style="font-size:13px;font-weight:700;color:${isCur ? '#9A3412' : 'var(--text)'};">${g.label}${isCur ? ' <span style="font-size:10px;color:#fff;background:#EA580C;padding:2px 8px;border-radius:999px;margin-left:4px;">지금</span>' : ''}</span>
+        <span style="color:var(--text-tertiary);font-size:12px;">${open ? '▲ 접기' : '▼ 펼치기'}</span>
       </button>
       ${open ? `<div style="padding:0 14px 12px;">${weeksHtml}</div>` : ''}
     </div>`;
   }).join('');
+
+  const ref = `<div style="margin-top:14px;display:grid;gap:8px;">${GUIDE_REF.map(r => `
+    <div style="border:1px solid var(--border);border-radius:12px;padding:12px 14px;background:#fff;">
+      <div style="font-size:13px;font-weight:700;margin-bottom:6px;">${r.t}</div>
+      <ul style="margin:0;padding-left:18px;font-size:12px;line-height:1.6;color:var(--text-secondary);">${r.items.map(i => `<li>${escapeHtml(i)}</li>`).join('')}</ul>
+    </div>`).join('')}</div>`;
+
+  document.getElementById('ageGuide').innerHTML = head + body + ref;
   const sub = document.getElementById('ageGuideSub');
   if (sub){
-    if (aw === -1) sub.textContent = '아직 출생 전 — 출생 후 주차·개월에 맞춰 강조돼요';
+    if (aw === -1) sub.textContent = '아직 출생 전 — 출생 후 주차에 맞춰 강조돼요';
     else if (am == null) sub.textContent = '생년월일을 등록하면 현재 주차를 강조해줘요';
-    else sub.textContent = `현재 약 ${am}개월 / ${aw}주 — 개월을 펼쳐 주차별로 확인 (일반 참고용)`;
+    else sub.textContent = `현재 ${aw + 1}주차 (약 ${am}개월) — 이번 주 항목 강조 · 개월별 펼쳐보기`;
   }
 }
 document.getElementById('btnAddAdminTask').addEventListener('click', () => {
