@@ -6,7 +6,7 @@
 // 2. 오프라인 캐싱 (네트워크 끊겨도 기본 페이지는 열림)
 // 3. 푸시 알림 수신 (2단계에서 추가됨)
 
-const CACHE_VERSION = 'lifeos-v5';
+const CACHE_VERSION = 'lifeos-v6';
 const CACHE_NAME = `${CACHE_VERSION}-static`;
 
 // 미리 캐시할 파일 목록
