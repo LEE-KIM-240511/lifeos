@@ -227,6 +227,34 @@ header{display:flex;align-items:center;justify-content:space-between;margin-bott
 .daypat-days{display:flex;gap:4px;padding:6px 30px 0;color:#E8A24C;font-weight:700;font-size:11px;}
 .daypat-days > div{flex:1;text-align:center;}
 .daypat-tip{position:absolute;display:none;background:#fff;color:#222;border-radius:10px;padding:7px 10px;font-size:11.5px;line-height:1.4;box-shadow:0 4px 14px rgba(0,0,0,.4);pointer-events:none;z-index:6;white-space:nowrap;font-weight:600;}
+/* 패턴/통계 서브탭 · 일과표 · 간격패턴 · 통계 */
+.chart-subtabs{display:flex;gap:6px;margin-bottom:12px;overflow-x:auto;}
+.chart-subtab{flex:1;white-space:nowrap;padding:9px 10px;border-radius:10px;border:1px solid var(--border);background:var(--card);font-size:12.5px;font-weight:600;color:var(--text-secondary);cursor:pointer;font-family:inherit;}
+.chart-subtab.active{background:#1F2937;color:#fff;border-color:#1F2937;}
+.chart-subtab.small{flex:0 0 auto;padding:6px 12px;font-size:12px;}
+.chart-pane{display:none;}
+.chart-pane.active{display:block;}
+.clock-nav{display:flex;align-items:center;gap:8px;margin-bottom:8px;}
+.clock-date{font-weight:700;font-size:14px;}
+.clock-wrap{background:#0d0d0f;border-radius:14px;padding:10px;display:flex;justify-content:center;}
+.clock-wrap svg{max-width:320px;width:100%;height:auto;}
+.stats-range{display:flex;gap:6px;margin-bottom:10px;}
+.stats-tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:8px;margin-bottom:14px;}
+.stat-tile{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:10px 12px;}
+.stat-tile .lb{font-size:11px;color:var(--text-secondary);}
+.stat-tile .vl{font-size:18px;font-weight:700;margin-top:2px;letter-spacing:-0.02em;}
+.stat-tile .sb{font-size:10.5px;color:var(--text-tertiary);margin-top:2px;}
+.ivl-day{font-size:12px;font-weight:700;color:var(--text-secondary);margin:14px 0 6px;}
+.ivl-row{display:flex;gap:10px;align-items:flex-start;padding:8px 0;}
+.ivl-time{width:58px;font-size:12px;color:var(--text-tertiary);font-variant-numeric:tabular-nums;flex-shrink:0;padding-top:2px;}
+.ivl-dot{width:26px;text-align:center;font-size:15px;flex-shrink:0;}
+.ivl-body{flex:1;min-width:0;}
+.ivl-title{font-size:13px;font-weight:600;}
+.ivl-sub{font-size:11.5px;color:var(--text-secondary);margin-top:1px;}
+.ivl-gap{display:flex;align-items:center;gap:8px;margin-left:58px;}
+.ivl-gap-line{width:26px;display:flex;justify-content:center;}
+.ivl-gap-line span{display:block;width:2px;height:14px;background:var(--border);}
+.ivl-gap-badge{font-size:11px;background:#F3F4F6;color:#374151;border-radius:999px;padding:2px 9px;font-weight:600;}
 /* 베이비타임 스타일 풀스크린 입력 시트 */
 .bt-sheet{position:fixed;inset:0;background:#1a1a1c;color:#fff;z-index:1500;display:none;flex-direction:column;}
 .bt-sheet.show{display:flex;}
@@ -516,35 +544,80 @@ header{display:flex;align-items:center;justify-content:space-between;margin-bott
 
   <!-- 패턴 차트 섹션 -->
   <div class="section-pane" id="section-chart">
-    <div style="margin-bottom:14px;">
-      <h2 style="font-size:15px;">📊 패턴 차트</h2>
-      <div style="font-size:11.5px;color:var(--text-tertiary);margin-top:2px;">최근 7일간의 수유/수면/체온 추이</div>
+    <div style="margin-bottom:10px;">
+      <h2 style="font-size:15px;">📊 패턴 및 통계</h2>
+      <div style="font-size:11.5px;color:var(--text-tertiary);margin-top:2px;">일과표 · 주간패턴 · 간격패턴 · 통계</div>
     </div>
-    <div class="card" style="margin-bottom:14px;">
-      <h3 style="font-size:13px;margin-bottom:10px;">🕐 하루 일과표 (최근 7일)</h3>
-      <div style="font-size:11px;color:var(--text-tertiary);margin:-6px 0 10px;">막대에 마우스를 올리거나(모바일은 탭) 상세가 떠요 · 위 칩으로 항목 끄기/켜기</div>
-      <div class="daypat-filter" id="dayPatternFilter"></div>
-      <div class="daypat-wrap">
-        <div class="daypat-chart" id="dayPatternChart"></div>
-        <div class="daypat-days" id="dayPatternDays"></div>
-        <div class="daypat-tip" id="dayPatternTip"></div>
+    <div class="chart-subtabs">
+      <button type="button" class="chart-subtab" data-ctab="clock" onclick="setChartTab('clock')">🕐 일과표</button>
+      <button type="button" class="chart-subtab active" data-ctab="week" onclick="setChartTab('week')">📅 주간패턴</button>
+      <button type="button" class="chart-subtab" data-ctab="interval" onclick="setChartTab('interval')">⏱ 간격패턴</button>
+      <button type="button" class="chart-subtab" data-ctab="stats" onclick="setChartTab('stats')">📈 통계</button>
+    </div>
+
+    <!-- 일과표 (24시간 원형) -->
+    <div class="chart-pane" id="chartPane-clock">
+      <div class="card">
+        <div class="clock-nav">
+          <button type="button" class="btn small" onclick="shiftClockDate(-1)">‹</button>
+          <div class="clock-date" id="clockDateLabel"></div>
+          <button type="button" class="btn small" onclick="shiftClockDate(1)">›</button>
+          <button type="button" class="btn small" onclick="shiftClockDate(0)" style="margin-left:auto;">오늘</button>
+        </div>
+        <div class="daypat-filter" id="clockFilter"></div>
+        <div id="dayClock" class="clock-wrap"></div>
+        <div id="dayClockEmpty" style="display:none;text-align:center;padding:12px;color:var(--text-tertiary);font-size:12px;">이 날 기록이 없어요</div>
+        <div style="font-size:11px;color:var(--text-tertiary);margin-top:8px;">밝은 구간 = 낮(6~18시) · 파란 호 = 수면 · 점 = 수유/기저귀/목욕 등 (올리면 상세)</div>
       </div>
-      <div id="dayPatternEmpty" style="display:none;text-align:center;padding:18px;color:var(--text-tertiary);font-size:12px;">아직 기록이 없습니다</div>
     </div>
-    <div class="card" style="margin-bottom:14px;">
-      <h3 style="font-size:13px;margin-bottom:10px;">🍼 일별 수유 횟수 / 양</h3>
-      <div class="chart-wrap" style="height:200px;"><canvas id="feedChart"></canvas></div>
-      <div id="feedChartEmpty" style="display:none;text-align:center;padding:20px;color:var(--text-tertiary);font-size:12px;">아직 수유 데이터가 없습니다</div>
+
+    <!-- 주간패턴 (7일 × 24시간) -->
+    <div class="chart-pane active" id="chartPane-week">
+      <div class="card">
+        <h3 style="font-size:13px;margin-bottom:10px;">📅 주간패턴 (최근 7일)</h3>
+        <div style="font-size:11px;color:var(--text-tertiary);margin:-6px 0 10px;">막대에 마우스를 올리거나(모바일은 탭) 상세가 떠요 · 위 칩으로 항목 끄기/켜기</div>
+        <div class="daypat-filter" id="dayPatternFilter"></div>
+        <div class="daypat-wrap">
+          <div class="daypat-chart" id="dayPatternChart"></div>
+          <div class="daypat-days" id="dayPatternDays"></div>
+          <div class="daypat-tip" id="dayPatternTip"></div>
+        </div>
+        <div id="dayPatternEmpty" style="display:none;text-align:center;padding:18px;color:var(--text-tertiary);font-size:12px;">아직 기록이 없습니다</div>
+      </div>
     </div>
-    <div class="card" style="margin-bottom:14px;">
-      <h3 style="font-size:13px;margin-bottom:10px;">😴 일별 수면 시간</h3>
-      <div class="chart-wrap" style="height:200px;"><canvas id="sleepChart"></canvas></div>
-      <div id="sleepChartEmpty" style="display:none;text-align:center;padding:20px;color:var(--text-tertiary);font-size:12px;">아직 수면 데이터가 없습니다</div>
+
+    <!-- 간격패턴 (이벤트 사이 간격) -->
+    <div class="chart-pane" id="chartPane-interval">
+      <div class="card">
+        <div style="font-size:11px;color:var(--text-tertiary);margin-bottom:8px;">최근 7일 · 이벤트 사이 <b>간격</b>을 뱃지로 보여줘요 (수유 간격 확인에 유용)</div>
+        <div class="daypat-filter" id="intervalFilter"></div>
+        <div id="intervalList"></div>
+      </div>
     </div>
-    <div class="card">
-      <h3 style="font-size:13px;margin-bottom:10px;">🌡️ 체온 추이</h3>
-      <div class="chart-wrap" style="height:200px;"><canvas id="tempChart"></canvas></div>
-      <div id="tempChartEmpty" style="display:none;text-align:center;padding:20px;color:var(--text-tertiary);font-size:12px;">아직 체온 데이터가 없습니다</div>
+
+    <!-- 통계 -->
+    <div class="chart-pane" id="chartPane-stats">
+      <div class="stats-range">
+        <button type="button" class="chart-subtab small" data-srange="day" onclick="setStatsRange('day')">오늘</button>
+        <button type="button" class="chart-subtab small active" data-srange="week" onclick="setStatsRange('week')">주 (7일)</button>
+        <button type="button" class="chart-subtab small" data-srange="month" onclick="setStatsRange('month')">월 (30일)</button>
+      </div>
+      <div class="stats-tiles" id="statsTiles"></div>
+      <div class="card" style="margin-bottom:14px;">
+        <h3 style="font-size:13px;margin-bottom:10px;">🍼 일별 수유 횟수 / 양</h3>
+        <div class="chart-wrap" style="height:200px;"><canvas id="feedChart"></canvas></div>
+        <div id="feedChartEmpty" style="display:none;text-align:center;padding:20px;color:var(--text-tertiary);font-size:12px;">아직 수유 데이터가 없습니다</div>
+      </div>
+      <div class="card" style="margin-bottom:14px;">
+        <h3 style="font-size:13px;margin-bottom:10px;">😴 일별 수면 시간</h3>
+        <div class="chart-wrap" style="height:200px;"><canvas id="sleepChart"></canvas></div>
+        <div id="sleepChartEmpty" style="display:none;text-align:center;padding:20px;color:var(--text-tertiary);font-size:12px;">아직 수면 데이터가 없습니다</div>
+      </div>
+      <div class="card">
+        <h3 style="font-size:13px;margin-bottom:10px;">🌡️ 체온 추이</h3>
+        <div class="chart-wrap" style="height:200px;"><canvas id="tempChart"></canvas></div>
+        <div id="tempChartEmpty" style="display:none;text-align:center;padding:20px;color:var(--text-tertiary);font-size:12px;">아직 체온 데이터가 없습니다</div>
+      </div>
     </div>
   </div>
 
@@ -1014,6 +1087,9 @@ let state = {
   visits: [],        // 진료: {id, kidId, date, hospital, doctor, reason, diagnosis, memo}
   pregnancy: [],     // 임신/태교: {id, kidId, date, kind: 'kick'|'checkup'|'diary'|'photo', text, weeks, weight, memo}
   checklist: {},     // 행정업무 체크: { [kidId]: { done: {taskId:true}, custom: [{id,title}] } }
+  chartTab: 'week',  // 패턴/통계 서브탭: clock | week | interval | stats
+  clockDate: null,   // 일과표 날짜 (null = 오늘)
+  statsRange: 'week',// 통계 기간: day | week | month
   currentKidId: null, currentSection: 'diary',
   careSubTab: 'today',
   careDate: null,
@@ -3804,16 +3880,175 @@ document.addEventListener('click', (e) => {
   const tip = document.getElementById('dayPatternTip'); if (tip) tip.style.display = 'none';
 });
 
+/* ===== 패턴/통계 서브탭 · 일과표(원형) · 간격패턴 · 통계 ===== */
+// 기간 내 케어 이벤트를 정규화해서 수집 (patternFilter 반영)
+function collectCareEvents(kidId, fromIso, toIso) {
+  const inRange = (s) => s && s.slice(0,10) >= fromIso && s.slice(0,10) <= toIso;
+  const ev = [];
+  if (patternFilter.feeding) state.feedings.filter(f => f.kidId === kidId && inRange(f.datetime)).forEach(f => {
+    const dt = parseDt(f.datetime); if (!dt) return;
+    const tl = {breast:'모유',formula:'분유',mixed:'혼합',solid:'이유식'}[f.type] || '수유';
+    const side = {left:'왼쪽',right:'오른쪽',both:'양쪽'}[f.side] || '';
+    const parts = []; if (f.amount) parts.push(f.amount+'ml'); if (f.durationMin) parts.push(f.durationMin+'분'); if (side) parts.push(side); if (f.memo) parts.push(f.memo);
+    const isF = f.type === 'formula';
+    ev.push({ kind:'feeding', start:dt, end: f.durationMin ? new Date(dt.getTime()+f.durationMin*60000) : null, title:(isF?'🍼 ':'🤱 ')+tl, sub:parts.join(' · '), amount:Number(f.amount)||0, color:isF?'#F5A623':'#FF8B8B', emoji:isF?'🍼':'🤱' });
+  });
+  // 수면은 자정을 넘기므로 시작 또는 종료가 기간 안이면 포함 (전날 밤잠이 오늘 새벽에 보이게)
+  if (patternFilter.sleep) state.sleeps.filter(s => s.kidId === kidId && (inRange(s.startTime) || inRange(s.endTime))).forEach(s => {
+    const st = parseDt(s.startTime); if (!st) return; const en = s.endTime ? parseDt(s.endTime) : null;
+    const tl = s.type === 'night' ? '밤잠' : (s.type === 'nap' ? '낮잠' : '수면');
+    ev.push({ kind:'sleep', start:st, end:en, title:'😴 '+tl, sub: en ? `${fmtTime(st)}~${fmtTime(en)} · ${fmtDuration(en-st)}` : `${fmtTime(st)}~ 진행 중`, dur: en ? (en-st) : 0, color:'#5B7CE6', emoji:'😴' });
+  });
+  if (patternFilter.diaper) state.diapers.filter(d => d.kidId === kidId && inRange(d.datetime)).forEach(d => {
+    const dt = parseDt(d.datetime); if (!dt) return;
+    const tl = d.type === 'poo' ? '대변' : (d.type === 'both' ? '소변+대변' : '소변');
+    const em = d.type === 'poo' ? '💩' : (d.type === 'both' ? '💧💩' : '💧');
+    ev.push({ kind:'diaper', start:dt, end:null, title:em+' '+tl, sub:d.memo||'', dtype:d.type, color:'#7FB8E8', emoji:em });
+  });
+  if (patternFilter.bath) state.baths.filter(b => b.kidId === kidId && inRange(b.datetime)).forEach(b => { const dt = parseDt(b.datetime); if (dt) ev.push({ kind:'bath', start:dt, end:null, title:'🛁 목욕', sub:b.memo||'', color:'#5BC0DE', emoji:'🛁' }); });
+  if (patternFilter.temp) state.temperatures.filter(t => t.kidId === kidId && inRange(t.datetime)).forEach(t => { const dt = parseDt(t.datetime); if (!dt) return; const v = Number(t.temp)||0; ev.push({ kind:'temp', start:dt, end:null, title:(v>=37.5?'🔥 ':'🌡️ ')+v.toFixed(1)+'°C', sub:t.memo||'', color:'#E57373', emoji: v>=37.5?'🔥':'🌡️' }); });
+  if (patternFilter.med) state.medications.filter(m => m.kidId === kidId && inRange(m.datetime)).forEach(m => { const dt = parseDt(m.datetime); if (dt) ev.push({ kind:'med', start:dt, end:null, title:'💊 '+(m.name||'약'), sub:m.dosage||'', color:'#B39DDB', emoji:'💊' }); });
+  return ev;
+}
+function renderFilterChipsInto(elId, onChange) {
+  const el = document.getElementById(elId); if (!el) return; el.innerHTML = '';
+  PATTERN_TYPES.forEach(t => {
+    const b = document.createElement('div');
+    b.className = 'daypat-chip' + (patternFilter[t.key] ? '' : ' off');
+    b.textContent = t.label;
+    b.onclick = () => { patternFilter[t.key] = !patternFilter[t.key]; onChange(); };
+    el.appendChild(b);
+  });
+}
+function fmtGap(ms) {
+  const m = Math.round(ms/60000); if (m < 60) return `${m}분`;
+  const h = Math.floor(m/60), mm = m%60; if (h < 24) return mm ? `${h}시간 ${mm}분` : `${h}시간`;
+  const d = Math.floor(h/24), hh = h%24; return hh ? `${d}일 ${hh}시간` : `${d}일`;
+}
+function daysSinceBirth(k, date) {
+  if (!k || !k.birthDate) return null;
+  const b = new Date(k.birthDate); b.setHours(0,0,0,0);
+  const d = new Date(date); d.setHours(0,0,0,0);
+  return Math.floor((d - b)/86400000) + 1;
+}
+window.setChartTab = (t) => { state.chartTab = t; renderChart(); };
+function applyChartTab() {
+  const t = state.chartTab || 'week';
+  document.querySelectorAll('.chart-subtab[data-ctab]').forEach(b => b.classList.toggle('active', b.dataset.ctab === t));
+  document.querySelectorAll('.chart-pane').forEach(p => p.classList.toggle('active', p.id === 'chartPane-' + t));
+}
+window.shiftClockDate = (d) => {
+  if (d === 0) state.clockDate = null;
+  else { const cur = state.clockDate ? new Date(state.clockDate) : new Date(); cur.setDate(cur.getDate() + d); state.clockDate = isoDate(cur); }
+  renderDayClock();
+};
+// 일과표: 하루 24시간 원형 (0시=위, 시계방향)
+function renderDayClock() {
+  const k = getKid(); const host = document.getElementById('dayClock'); if (!k || !host) return;
+  const date = state.clockDate ? new Date(state.clockDate) : new Date();
+  const iso = isoDate(date);
+  const dayNames = ['일','월','화','수','목','금','토'];
+  const lab = document.getElementById('clockDateLabel');
+  if (lab) lab.textContent = `${date.getMonth()+1}월 ${String(date.getDate()).padStart(2,'0')}일 (${dayNames[date.getDay()]})`;
+  renderFilterChipsInto('clockFilter', renderDayClock);
+  const ev = collectCareEvents(k.id, iso, iso);
+  const emptyEl = document.getElementById('dayClockEmpty'); if (emptyEl) emptyEl.style.display = ev.length ? 'none' : '';
+  const S = 300, C = 150, R = 118, W = 30;
+  const ang = (h) => (h/24) * 2*Math.PI - Math.PI/2;
+  const pt = (r, h) => [C + r*Math.cos(ang(h)), C + r*Math.sin(ang(h))];
+  const f1 = (n) => n.toFixed(1);
+  const arc = (r, h1, h2) => { if (h2 <= h1) h2 = h1 + 0.02; const [x1,y1] = pt(r,h1), [x2,y2] = pt(r,h2); const large = (h2-h1) > 12 ? 1 : 0; return `M${f1(x1)},${f1(y1)} A${r},${r} 0 ${large} 1 ${f1(x2)},${f1(y2)}`; };
+  const hourOf = (d) => d.getHours() + d.getMinutes()/60;
+  const rMid = R - W/2;
+  let g = '';
+  g += `<circle cx="${C}" cy="${C}" r="${rMid}" fill="none" stroke="#2a2a2e" stroke-width="${W}"/>`;
+  g += `<path d="${arc(rMid, 6, 18)}" fill="none" stroke="#3a3a40" stroke-width="${W}"/>`;
+  for (let h = 0; h < 24; h += 2) {
+    const [x,y] = pt(R+12, h); g += `<text x="${f1(x)}" y="${f1(y)}" fill="#888" font-size="9" text-anchor="middle" dominant-baseline="middle">${h}</text>`;
+    const [a1,b1] = pt(R+1, h), [a2,b2] = pt(R+5, h); g += `<line x1="${f1(a1)}" y1="${f1(b1)}" x2="${f1(a2)}" y2="${f1(b2)}" stroke="#666" stroke-width="1"/>`;
+  }
+  ev.filter(e => e.kind === 'sleep').forEach(e => {
+    let h1 = isoDate(e.start) === iso ? hourOf(e.start) : 0;
+    let h2 = e.end ? (isoDate(e.end) === iso ? hourOf(e.end) : 24) : (iso === isoDate(new Date()) ? hourOf(new Date()) : 24);
+    g += `<path d="${arc(rMid, h1, h2)}" fill="none" stroke="${e.color}" stroke-width="${W-6}"><title>${escapeHtml(e.title + ' · ' + e.sub)}</title></path>`;
+  });
+  ev.filter(e => e.kind !== 'sleep').forEach(e => {
+    const [x,y] = pt(rMid, hourOf(e.start));
+    g += `<circle cx="${f1(x)}" cy="${f1(y)}" r="9" fill="${e.color}" stroke="#0d0d0f" stroke-width="2"><title>${escapeHtml(e.title + (e.sub ? ' · ' + e.sub : '') + ' · ' + fmtTime(e.start))}</title></circle>`;
+    g += `<text x="${f1(x)}" y="${f1(y+0.5)}" font-size="10" text-anchor="middle" dominant-baseline="middle" style="pointer-events:none">${e.emoji}</text>`;
+  });
+  if (iso === isoDate(new Date())) { const nh = hourOf(new Date()); const [x1,y1] = pt(R-W-8, nh), [x2,y2] = pt(R+2, nh); g += `<line x1="${f1(x1)}" y1="${f1(y1)}" x2="${f1(x2)}" y2="${f1(y2)}" stroke="#F5A623" stroke-width="2"/>`; }
+  const dsb = daysSinceBirth(k, date);
+  g += `<circle cx="${C}" cy="${C}" r="${R-W-10}" fill="#0d0d0f"/>`;
+  g += `<text x="${C}" y="${C-10}" fill="#aaa" font-size="10" text-anchor="middle">DAY</text>`;
+  g += `<text x="${C}" y="${C+12}" fill="#E8A24C" font-size="22" font-weight="700" text-anchor="middle">${dsb != null ? dsb + '일' : '-'}</text>`;
+  host.innerHTML = `<svg viewBox="0 0 ${S} ${S}" xmlns="http://www.w3.org/2000/svg">${g}</svg>`;
+}
+// 간격패턴: 최근 7일, 이벤트 사이 간격 뱃지
+function renderIntervalPattern() {
+  const k = getKid(); const host = document.getElementById('intervalList'); if (!k || !host) return;
+  renderFilterChipsInto('intervalFilter', renderIntervalPattern);
+  const to = new Date(); const from = new Date(); from.setDate(to.getDate() - 6);
+  const ev = collectCareEvents(k.id, isoDate(from), isoDate(to)).sort((a,b) => b.start - a.start);
+  if (!ev.length) { host.innerHTML = `<div class="empty"><div class="big">⏱</div><div class="label">최근 7일 기록이 없어요</div></div>`; return; }
+  const dayNames = ['일','월','화','수','목','금','토'];
+  let html = '', lastDay = null;
+  ev.forEach((e, i) => {
+    const dIso = isoDate(e.start);
+    if (dIso !== lastDay) {
+      const d = e.start, dsb = daysSinceBirth(k, d);
+      html += `<div class="ivl-day">${d.getMonth()+1}월 ${String(d.getDate()).padStart(2,'0')}일 (${dayNames[d.getDay()]})${dsb != null ? ` · 생후 ${dsb}일` : ''}</div>`;
+      lastDay = dIso;
+    } else if (i > 0) {
+      html += `<div class="ivl-gap"><div class="ivl-gap-line"><span></span></div><div class="ivl-gap-badge">${fmtGap(ev[i-1].start - e.start)}</div></div>`;
+    }
+    html += `<div class="ivl-row"><div class="ivl-time">${fmtTime(e.start)}</div><div class="ivl-dot">${e.emoji}</div><div class="ivl-body"><div class="ivl-title" style="color:${e.color}">${escapeHtml(e.title)}</div>${e.sub ? `<div class="ivl-sub">${escapeHtml(e.sub)}</div>` : ''}</div></div>`;
+  });
+  host.innerHTML = html;
+}
+window.setStatsRange = (r) => { state.statsRange = r; renderChart(); };
+function statsDays() { return state.statsRange === 'day' ? 1 : (state.statsRange === 'month' ? 30 : 7); }
+// 통계 타일 (필터와 무관하게 전체 항목 집계)
+function renderStats() {
+  const k = getKid(); const host = document.getElementById('statsTiles'); if (!k || !host) return;
+  document.querySelectorAll('.chart-subtab[data-srange]').forEach(b => b.classList.toggle('active', b.dataset.srange === (state.statsRange || 'week')));
+  const N = statsDays(); const to = new Date(); const from = new Date(); from.setDate(to.getDate() - (N-1));
+  const saved = { ...patternFilter }; Object.keys(patternFilter).forEach(x => patternFilter[x] = true);
+  const ev = collectCareEvents(k.id, isoDate(from), isoDate(to));
+  Object.assign(patternFilter, saved);
+  const feeds = ev.filter(e => e.kind === 'feeding').sort((a,b) => a.start - b.start);
+  const totalMl = feeds.reduce((s,e) => s + (e.amount||0), 0);
+  const withMl = feeds.filter(e => e.amount > 0).length;
+  let gapSum = 0, gapN = 0;
+  for (let i = 1; i < feeds.length; i++) { const gp = feeds[i].start - feeds[i-1].start; if (gp > 0 && gp < 24*3600000) { gapSum += gp; gapN++; } }
+  const sleeps = ev.filter(e => e.kind === 'sleep'); const sleepMs = sleeps.reduce((s,e) => s + (e.dur||0), 0);
+  const diapers = ev.filter(e => e.kind === 'diaper');
+  const pee = diapers.filter(e => e.dtype !== 'poo').length, poo = diapers.filter(e => e.dtype === 'poo' || e.dtype === 'both').length;
+  const per = (n) => N > 1 ? (n/N).toFixed(1) + '/일' : '';
+  host.innerHTML = `
+    <div class="stat-tile"><div class="lb">🍼 수유 횟수</div><div class="vl">${feeds.length}회</div><div class="sb">${per(feeds.length) || '오늘'}</div></div>
+    <div class="stat-tile"><div class="lb">🍼 총 수유량</div><div class="vl">${totalMl ? totalMl.toLocaleString('ko-KR') + 'ml' : '-'}</div><div class="sb">${withMl ? `평균 1회 ${Math.round(totalMl/withMl)}ml` : 'ml 기록 없음'}</div></div>
+    <div class="stat-tile"><div class="lb">⏱ 평균 수유 간격</div><div class="vl">${gapN ? fmtGap(gapSum/gapN) : '-'}</div><div class="sb">${gapN ? `${gapN}구간 기준` : '2회 이상 필요'}</div></div>
+    <div class="stat-tile"><div class="lb">😴 총 수면</div><div class="vl">${sleepMs ? fmtDuration(sleepMs) : '-'}</div><div class="sb">${sleeps.length}회${N > 1 && sleepMs ? ` · 하루 ${fmtDuration(sleepMs/N)}` : ''}</div></div>
+    <div class="stat-tile"><div class="lb">💧 소변</div><div class="vl">${pee}개</div><div class="sb">${per(pee)}</div></div>
+    <div class="stat-tile"><div class="lb">💩 대변</div><div class="vl">${poo}개</div><div class="sb">${per(poo)}</div></div>`;
+}
+
 /* ===== 패턴 차트 (최근 7일) ===== */
 let feedChartObj, sleepChartObj, tempChartObj;
 function renderChart() {
   const k = getKid(); if (!k) return;
+  applyChartTab();
+  if (state.chartTab === 'clock') renderDayClock();
+  if (state.chartTab === 'interval') renderIntervalPattern();
+  if (state.chartTab === 'stats') renderStats();
   renderDayPatternFilter();
   renderDayPattern();
 
   const now = new Date();
   const days = [];
-  for (let i = 6; i >= 0; i--) {
+  const N_DAYS = statsDays(); // 통계 기간(오늘/7일/30일)에 따라 차트 일수 결정
+  for (let i = N_DAYS - 1; i >= 0; i--) {
     const d = new Date(now); d.setDate(now.getDate() - i);
     days.push(isoDate(d));
   }
