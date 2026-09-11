@@ -1522,12 +1522,29 @@ function stockCatFromText(v) {
 }
 function normDate(v) {
   if (v == null || v === '') return '';
-  if (v instanceof Date && !isNaN(v)) return isoDate(v);
+  // 1) 엑셀 날짜 셀 → Date 객체
+  if (v instanceof Date) return isNaN(v.getTime()) ? '' : isoDate(v);
+  // 2) 엑셀 날짜 일련번호 (1899-12-30 기준, 시간대 영향 없게 UTC로 계산)
+  if (typeof v === 'number') {
+    if (v > 20000 && v < 80000) {
+      const d = new Date(Date.UTC(1899, 11, 30) + Math.round(v) * 86400000);
+      return `${d.getUTCFullYear()}-${String(d.getUTCMonth()+1).padStart(2,'0')}-${String(d.getUTCDate()).padStart(2,'0')}`;
+    }
+    return '';
+  }
   const s = String(v).trim();
-  const m = s.match(/^(\d{4})[.\-\/년\s]*(\d{1,2})[.\-\/월\s]*(\d{1,2})/);
-  if (m) return `${m[1]}-${String(m[2]).padStart(2,'0')}-${String(m[3]).padStart(2,'0')}`;
-  // 엑셀 날짜 일련번호
-  if (/^\d{4,6}$/.test(s)) { const d = new Date(Math.round((Number(s) - 25569) * 86400000)); if (!isNaN(d)) return isoDate(d); }
+  let m;
+  // 2027-03-01 / 2027.3.1 / 2027/03/01 / 2027년 3월 1일 / 2027. 3. 1
+  if ((m = s.match(/^(\d{4})\s*[.\-\/년]\s*(\d{1,2})\s*[.\-\/월]\s*(\d{1,2})/))) return `${m[1]}-${m[2].padStart(2,'0')}-${m[3].padStart(2,'0')}`;
+  // 27-03-01 / 27.3.1 (두 자리 연도)
+  if ((m = s.match(/^(\d{2})\s*[.\-\/]\s*(\d{1,2})\s*[.\-\/]\s*(\d{1,2})$/))) return `20${m[1]}-${m[2].padStart(2,'0')}-${m[3].padStart(2,'0')}`;
+  // 3/1/2027 / 03-01-2027 (월/일/연도, 영문 엑셀)
+  if ((m = s.match(/^(\d{1,2})\s*[.\-\/]\s*(\d{1,2})\s*[.\-\/]\s*(\d{4})$/))) return `${m[3]}-${m[1].padStart(2,'0')}-${m[2].padStart(2,'0')}`;
+  // 일련번호가 문자열로 온 경우
+  if (/^\d{5}$/.test(s)) return normDate(Number(s));
+  // 그 외 ("Wed Mar 01 2027", "2027-03-01T00:00:00" 등)
+  const d = new Date(s);
+  if (!isNaN(d.getTime())) return isoDate(d);
   return '';
 }
 // 템플릿 다운로드
@@ -1574,7 +1591,8 @@ document.getElementById('stockXlsxInput').addEventListener('change', (e) => {
     try {
       const wb = XLSX.read(ev.target.result, { type: 'array', cellDates: true });
       const sheetName = wb.SheetNames.includes('재고') ? '재고' : wb.SheetNames[0];
-      const rows = XLSX.utils.sheet_to_json(wb.Sheets[sheetName], { defval: '', raw: false, dateNF: 'yyyy-mm-dd' });
+      // raw:true → 날짜 셀은 Date 객체/일련번호 그대로 받아서 normDate가 직접 변환 (표시형식·로케일 무관)
+      const rows = XLSX.utils.sheet_to_json(wb.Sheets[sheetName], { defval: '', raw: true });
       if (!rows.length) return toast('파일에 데이터가 없어요');
       // 헤더 유연 매핑
       const headers = Object.keys(rows[0]);
