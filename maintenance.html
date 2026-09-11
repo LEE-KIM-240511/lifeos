@@ -412,6 +412,8 @@ body {
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
 <script src="lifeos-sync.js"></script>
+<!-- 엑셀 가져오기/템플릿 (SheetJS) -->
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 </head>
 <body>
 <div class="app">
@@ -470,7 +472,13 @@ body {
   <div class="tab-pane" id="pane-stocks" style="display:none;">
     <div class="action-bar">
       <h2>📦 생필품 재고</h2>
-      <button class="btn primary small" id="btnAddStock">+ 추가</button>
+      <div style="display:flex;gap:6px;flex-wrap:wrap;">
+        <button class="btn small" id="btnStockTemplate">📥 엑셀 템플릿</button>
+        <button class="btn small" id="btnStockImport">📤 엑셀 가져오기</button>
+        <button class="btn small" id="btnBulkStock">📋 붙여넣기</button>
+        <button class="btn primary small" id="btnAddStock">+ 추가</button>
+        <input type="file" id="stockXlsxInput" accept=".xlsx,.xls,.csv" style="display:none;">
+      </div>
     </div>
     <div id="stocksList"></div>
   </div>
@@ -545,13 +553,13 @@ body {
       <div class="field">
         <label>카테고리</label>
         <select id="stockCategory">
-          <option value="bathroom">🛁 욕실</option>
-          <option value="kitchen">🍴 주방</option>
-          <option value="toilet">🚽 화장실</option>
-          <option value="laundry">🧺 세탁</option>
-          <option value="cleaning">🧹 청소</option>
+          <option value="skincare">🧴 얼굴 스킨케어</option>
+          <option value="body">🧼 바디</option>
+          <option value="hair">💇 헤어</option>
+          <option value="hygiene">🪥 세면·구강</option>
           <option value="baby">👶 아기용품</option>
           <option value="medicine">💊 의약품</option>
+          <option value="household">🧻 생활소모품</option>
           <option value="other">📦 기타</option>
         </select>
       </div>
@@ -568,6 +576,38 @@ body {
       <button class="btn danger" id="btnDeleteStock" style="display:none;">삭제</button>
       <button class="btn" onclick="closeModal('modalStock')">취소</button>
       <button class="btn primary" id="btnSaveStock">저장</button>
+    </div>
+  </div>
+</div>
+
+<!-- 재고 일괄 등록 모달 -->
+<div class="modal-bg" id="modalStockBulk">
+  <div class="modal">
+    <h3>📋 재고 목록 한 번에 등록</h3>
+    <div style="font-size:12px;color:var(--text-secondary);margin-bottom:10px;line-height:1.6;">
+      한 줄에 하나씩. <b>이름만</b> 적어도 되고, 뒤에 <code>|</code>로 브랜드·수량·유통기한을 붙여도 돼요.<br>
+      <span style="color:var(--text-tertiary);">예)</span> <code>스킨</code> &nbsp;/&nbsp; <code>선크림 | 라네즈 | 2 | 2027-03-01</code>
+    </div>
+    <div class="field">
+      <label>카테고리 (전체 적용)</label>
+      <select id="bulkCategory">
+        <option value="skincare">🧴 얼굴 스킨케어</option>
+        <option value="body">🧼 바디</option>
+        <option value="hair">💇 헤어</option>
+        <option value="hygiene">🪥 세면·구강</option>
+        <option value="baby">👶 아기용품</option>
+        <option value="medicine">💊 의약품</option>
+        <option value="household">🧻 생활소모품</option>
+        <option value="other">📦 기타</option>
+      </select>
+    </div>
+    <div class="field">
+      <label>목록</label>
+      <textarea id="bulkText" rows="10" placeholder="스킨&#10;로션 | 이니스프리&#10;선크림 | 라네즈 | 2 | 2027-03-01&#10;화장솜 | | 3"></textarea>
+    </div>
+    <div class="actions">
+      <button class="btn" onclick="closeModal('modalStockBulk')">취소</button>
+      <button class="btn primary" id="btnSaveBulk">전부 등록</button>
     </div>
   </div>
 </div>
@@ -716,6 +756,8 @@ function load() {
     if (Array.isArray(data.items)) state.items = data.items;
     if (Array.isArray(data.repairs)) state.repairs = data.repairs;
     if (Array.isArray(data.stocks)) state.stocks = data.stocks;
+    // 옛 카테고리 id(욕실/주방/화장실/세탁/청소)를 새 체계로 자동 변환
+    state.stocks.forEach(s => { if (s && STOCK_CAT_MIGRATE[s.category]) s.category = STOCK_CAT_MIGRATE[s.category]; });
   } catch(e) {}
 }
 
@@ -1114,15 +1156,17 @@ document.getElementById('btnDeleteRepair').addEventListener('click', () => {
 
 // ===== 재고 관리 =====
 const STOCK_CATEGORIES = {
-  bathroom: { icon: '🛁', label: '욕실' },
-  kitchen:  { icon: '🍴', label: '주방' },
-  toilet:   { icon: '🚽', label: '화장실' },
-  laundry:  { icon: '🧺', label: '세탁' },
-  cleaning: { icon: '🧹', label: '청소' },
-  baby:     { icon: '👶', label: '아기용품' },
-  medicine: { icon: '💊', label: '의약품' },
-  other:    { icon: '📦', label: '기타' },
+  skincare:  { icon: '🧴', label: '얼굴 스킨케어' },  // 스킨/토너, 로션, 에센스, 크림, 선크림, 클렌징
+  body:      { icon: '🧼', label: '바디' },           // 바디워시, 바디로션, 핸드크림, 데오
+  hair:      { icon: '💇', label: '헤어' },           // 샴푸, 린스/트리트먼트
+  hygiene:   { icon: '🪥', label: '세면·구강' },      // 치약, 칫솔, 면도
+  baby:      { icon: '👶', label: '아기용품' },       // 기저귀, 아기 물티슈, 아기로션
+  medicine:  { icon: '💊', label: '의약품' },         // 해열제, 밴드, 비타민
+  household: { icon: '🧻', label: '생활소모품' },     // 휴지, 세제, 청소용품
+  other:     { icon: '📦', label: '기타' },
 };
+// 옛 카테고리 id → 새 id (예전 데이터 호환)
+const STOCK_CAT_MIGRATE = { bathroom:'skincare', kitchen:'household', toilet:'household', laundry:'household', cleaning:'household' };
 function getStockCat(id) { return STOCK_CATEGORIES[id] || STOCK_CATEGORIES.other; }
 // 유통기한 상태: 'expired' | 'expiring' (30일 이내) | 'soon' (90일 이내) | 'ok' | 'none'
 function getExpiryStatus(s) {
@@ -1352,7 +1396,7 @@ window.openStockModal = function(id) {
     document.getElementById('stockName').value = '';
     document.getElementById('stockBrand').value = '';
     document.getElementById('stockVariant').value = '';
-    document.getElementById('stockCategory').value = 'bathroom';
+    document.getElementById('stockCategory').value = 'skincare';
     document.getElementById('stockUnit').value = '개';
     document.getElementById('stockLocation').value = '';
     document.getElementById('stockQuantity').value = 1;
@@ -1405,6 +1449,183 @@ document.getElementById('btnDeleteStock').addEventListener('click', () => {
     closeModal('modalStock');
     toast('삭제되었어요');
   });
+});
+
+// ===== 재고 일괄 등록 (붙여넣기) =====
+document.getElementById('btnBulkStock').addEventListener('click', () => {
+  document.getElementById('bulkText').value = '';
+  document.getElementById('bulkCategory').value = 'skincare';
+  showModal('modalStockBulk');
+});
+// 한 줄 파싱: "이름 | 브랜드 | 수량 | 유통기한" — 순서 유연: 숫자만이면 수량, 날짜꼴이면 유통기한, 나머지는 브랜드
+function parseBulkLine(line) {
+  const parts = line.split(/[|\t,]/).map(s => s.trim());
+  const name = parts.shift();
+  if (!name) return null;
+  const item = { name, brand: '', quantity: 1, expiryDate: '' };
+  parts.forEach(p => {
+    if (!p) return;
+    const dm = p.match(/^(\d{4})[.\-\/](\d{1,2})[.\-\/](\d{1,2})$/);
+    if (dm) { item.expiryDate = `${dm[1]}-${String(dm[2]).padStart(2,'0')}-${String(dm[3]).padStart(2,'0')}`; return; }
+    if (/^\d+$/.test(p)) { item.quantity = Math.max(1, parseInt(p, 10)); return; }
+    if (!item.brand) item.brand = p;
+  });
+  return item;
+}
+document.getElementById('btnSaveBulk').addEventListener('click', () => {
+  const text = document.getElementById('bulkText').value;
+  const category = document.getElementById('bulkCategory').value;
+  const lines = text.split(/\r?\n/).map(s => s.trim()).filter(Boolean);
+  if (lines.length === 0) return toast('목록을 붙여넣어 주세요');
+  const today = isoDate(new Date());
+  let added = 0;
+  lines.forEach(line => {
+    const p = parseBulkLine(line);
+    if (!p) return;
+    state.stocks.push({
+      id: uid(), createdAt: today, lastChanged: today,
+      name: p.name, brand: p.brand, variant: '', category,
+      unit: '개', location: '', quantity: p.quantity,
+      expiryDate: p.expiryDate, purchaseDate: '', memo: '',
+    });
+    added++;
+  });
+  save();
+  state.currentTab = 'stocks';
+  document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.tab === 'stocks'));
+  document.querySelectorAll('.tab-pane').forEach(p => p.style.display = 'none');
+  document.getElementById('pane-stocks').style.display = '';
+  renderAllSections();
+  closeModal('modalStockBulk');
+  toast(`✅ ${added}개 등록됐어요`);
+});
+
+// ===== 재고 엑셀 템플릿 다운로드 / 엑셀 가져오기 =====
+const STOCK_XLSX_HEADERS = ['이름','브랜드','종류','카테고리','수량','단위','보관위치','유통기한','구매일','메모'];
+const STOCK_CAT_BY_LABEL = {
+  '스킨케어':'skincare','얼굴':'skincare','화장품':'skincare','기초':'skincare','skincare':'skincare','face':'skincare',
+  '바디':'body','body':'body',
+  '헤어':'hair','머리':'hair','hair':'hair',
+  '세면':'hygiene','구강':'hygiene','치약':'hygiene','면도':'hygiene','hygiene':'hygiene',
+  '아기용품':'baby','아기':'baby','육아':'baby','baby':'baby',
+  '의약품':'medicine','약':'medicine','medicine':'medicine',
+  '생활소모품':'household','생활':'household','소모품':'household','휴지':'household','세제':'household','청소':'household','주방':'household','화장실':'household','세탁':'household','household':'household',
+  // 옛 라벨/id 호환
+  '욕실':'skincare','bathroom':'skincare','kitchen':'household','toilet':'household','laundry':'household','cleaning':'household',
+  '기타':'other','other':'other',
+};
+function stockCatFromText(v) {
+  const s = String(v || '').replace(/[^가-힣a-zA-Z]/g, '').toLowerCase();
+  if (!s) return 'other';
+  for (const k of Object.keys(STOCK_CAT_BY_LABEL)) { if (s.includes(k.toLowerCase())) return STOCK_CAT_BY_LABEL[k]; }
+  return 'other';
+}
+function normDate(v) {
+  if (v == null || v === '') return '';
+  if (v instanceof Date && !isNaN(v)) return isoDate(v);
+  const s = String(v).trim();
+  const m = s.match(/^(\d{4})[.\-\/년\s]*(\d{1,2})[.\-\/월\s]*(\d{1,2})/);
+  if (m) return `${m[1]}-${String(m[2]).padStart(2,'0')}-${String(m[3]).padStart(2,'0')}`;
+  // 엑셀 날짜 일련번호
+  if (/^\d{4,6}$/.test(s)) { const d = new Date(Math.round((Number(s) - 25569) * 86400000)); if (!isNaN(d)) return isoDate(d); }
+  return '';
+}
+// 템플릿 다운로드
+document.getElementById('btnStockTemplate').addEventListener('click', () => {
+  if (typeof XLSX === 'undefined') return toast('엑셀 기능 로딩 중… 잠시 후 다시');
+  const data = [
+    STOCK_XLSX_HEADERS,
+    ['스킨', '라네즈', '수분', '얼굴 스킨케어', 2, '개', '화장대', '2027-03-01', '2026-09-01', '올리브영 세일'],
+    ['선크림', '이니스프리', '', '얼굴 스킨케어', 1, '개', '', '2027-06-30', '', '개봉 후 1년'],
+    ['바디로션', '니베아', '', '바디', 1, '개', '욕실', '2027-12-31', '', ''],
+    ['샴푸', '헤드앤숄더', '두피케어', '헤어', 2, '개', '욕실', '', '', ''],
+    ['기저귀', '하기스', 'NB 1단계', '아기용품', 30, '개', '아기방 서랍', '', '2026-08-25', ''],
+    ['해열제', '', '어린이 타이레놀', '의약품', 1, '병', '냉장고', '2027-01-15', '', ''],
+    ['휴지', '', '', '생활소모품', 6, '롤', '베란다', '', '', ''],
+  ];
+  const ws = XLSX.utils.aoa_to_sheet(data);
+  ws['!cols'] = [{wch:14},{wch:12},{wch:14},{wch:10},{wch:6},{wch:6},{wch:14},{wch:12},{wch:12},{wch:18}];
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, '재고');
+  const guide = [
+    ['📦 집안관리 · 재고 엑셀 템플릿'],
+    [''],
+    ['1. "재고" 시트에 한 줄에 하나씩 적으세요. 첫 줄(헤더)은 그대로 두세요.'],
+    ['2. "이름"만 필수, 나머지는 비워도 됩니다.'],
+    ['3. 카테고리: 얼굴 스킨케어 / 바디 / 헤어 / 세면·구강 / 아기용품 / 의약품 / 생활소모품 / 기타'],
+    ['   · 스킨·토너·로션·에센스·크림·선크림 → 얼굴 스킨케어 / 바디워시·바디로션·핸드크림 → 바디 / 샴푸·린스 → 헤어'],
+    ['4. 날짜는 2027-03-01 / 2027.03.01 / 2027/03/01 아무거나 OK'],
+    ['5. 다 적었으면 집안관리 → 재고 → [📤 엑셀 가져오기]로 이 파일 업로드'],
+  ];
+  const ws2 = XLSX.utils.aoa_to_sheet(guide); ws2['!cols'] = [{wch:70}];
+  XLSX.utils.book_append_sheet(wb, ws2, '사용설명');
+  XLSX.writeFile(wb, `재고_템플릿_${isoDate(new Date())}.xlsx`);
+  toast('템플릿 다운로드됨');
+});
+// 가져오기
+document.getElementById('btnStockImport').addEventListener('click', () => document.getElementById('stockXlsxInput').click());
+document.getElementById('stockXlsxInput').addEventListener('change', (e) => {
+  const file = e.target.files && e.target.files[0];
+  e.target.value = '';
+  if (!file) return;
+  if (typeof XLSX === 'undefined') return toast('엑셀 기능 로딩 중… 잠시 후 다시');
+  const reader = new FileReader();
+  reader.onload = (ev) => {
+    try {
+      const wb = XLSX.read(ev.target.result, { type: 'array', cellDates: true });
+      const sheetName = wb.SheetNames.includes('재고') ? '재고' : wb.SheetNames[0];
+      const rows = XLSX.utils.sheet_to_json(wb.Sheets[sheetName], { defval: '', raw: false, dateNF: 'yyyy-mm-dd' });
+      if (!rows.length) return toast('파일에 데이터가 없어요');
+      // 헤더 유연 매핑
+      const headers = Object.keys(rows[0]);
+      const pick = (...cands) => headers.find(h => cands.some(c => h.replace(/\s/g,'').includes(c)));
+      const H = {
+        name: pick('이름','품목','제품','상품','name'),
+        brand: pick('브랜드','brand'),
+        variant: pick('종류','타입','variant'),
+        category: pick('카테고리','분류','category'),
+        quantity: pick('수량','개수','qty','quantity'),
+        unit: pick('단위','unit'),
+        location: pick('보관','위치','location'),
+        expiryDate: pick('유통','만료','expiry'),
+        purchaseDate: pick('구매','구입','purchase'),
+        memo: pick('메모','비고','memo'),
+      };
+      if (!H.name) return toast('"이름" 열을 찾을 수 없어요 (템플릿 헤더를 확인)');
+      const today = isoDate(new Date());
+      let added = 0, skipped = 0;
+      rows.forEach(r => {
+        const name = String(r[H.name] || '').trim();
+        if (!name) { skipped++; return; }
+        const qty = Math.max(1, parseInt(String(r[H.quantity] || '').replace(/[^\d]/g, ''), 10) || 1);
+        state.stocks.push({
+          id: uid(), createdAt: today, lastChanged: today,
+          name,
+          brand: H.brand ? String(r[H.brand] || '').trim() : '',
+          variant: H.variant ? String(r[H.variant] || '').trim() : '',
+          category: H.category ? stockCatFromText(r[H.category]) : 'other',
+          quantity: qty,
+          unit: (H.unit && String(r[H.unit] || '').trim()) || '개',
+          location: H.location ? String(r[H.location] || '').trim() : '',
+          expiryDate: H.expiryDate ? normDate(r[H.expiryDate]) : '',
+          purchaseDate: H.purchaseDate ? normDate(r[H.purchaseDate]) : '',
+          memo: H.memo ? String(r[H.memo] || '').trim() : '',
+        });
+        added++;
+      });
+      save();
+      state.currentTab = 'stocks';
+      document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.tab === 'stocks'));
+      document.querySelectorAll('.tab-pane').forEach(p => p.style.display = 'none');
+      document.getElementById('pane-stocks').style.display = '';
+      renderAllSections();
+      toast(`✅ ${added}개 등록됐어요${skipped ? ` (이름 없는 ${skipped}줄 건너뜀)` : ''}`);
+    } catch (err) {
+      console.error(err);
+      toast('파일을 읽을 수 없어요 · 템플릿 양식인지 확인');
+    }
+  };
+  reader.readAsArrayBuffer(file);
 });
 
 // 탭 전환
