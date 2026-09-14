@@ -3912,16 +3912,32 @@ document.getElementById('btnDeleteVisit').addEventListener('click', () => {
 });
 
 /* ===== 하루 일과표 (24h × 7일, 막대+이모지+툴팁) ===== */
-let patternFilter = { feeding:true, sleep:true, diaper:true, bath:true, temp:true, med:true, pump:true };
+// 패턴/통계 필터 — 수유는 종류별, 기저귀는 소변/대변 각각 켜고 끌 수 있음 (화면 필터일 뿐, 기록엔 영향 없음)
+let patternFilter = { feed_breast:true, feed_pumped:true, feed_formula:true, feed_mixed:true, feed_solid:true, sleep:true, diaper_pee:true, diaper_poo:true, bath:true, temp:true, med:true, pump:true };
 const PATTERN_TYPES = [
-  { key:'feeding', label:'🍼 수유' },
-  { key:'sleep',   label:'😴 수면' },
-  { key:'diaper',  label:'💩 기저귀' },
-  { key:'bath',    label:'🛁 목욕' },
-  { key:'temp',    label:'🌡️ 체온' },
-  { key:'med',     label:'💊 약' },
-  { key:'pump',    label:'🫗 유축' },
+  { key:'feed_breast',  label:'🤱 직수' },
+  { key:'feed_pumped',  label:'🥛 유축수유' },
+  { key:'feed_formula', label:'🍼 분유' },
+  { key:'feed_mixed',   label:'🍼🤱 혼합' },
+  { key:'feed_solid',   label:'🥄 이유식' },
+  { key:'sleep',        label:'😴 수면' },
+  { key:'diaper_pee',   label:'💧 소변' },
+  { key:'diaper_poo',   label:'💩 대변' },
+  { key:'bath',         label:'🛁 목욕' },
+  { key:'temp',         label:'🌡️ 체온' },
+  { key:'med',          label:'💊 약' },
+  { key:'pump',         label:'🫗 유축' },
 ];
+const FEED_FILTER_KEY = { breast:'feed_breast', pumpedmilk:'feed_pumped', formula:'feed_formula', mixed:'feed_mixed', solid:'feed_solid' };
+function feedFilterOn(f) { return !!patternFilter[FEED_FILTER_KEY[f && f.type] || 'feed_breast']; }   // 타입 없는 옛 기록은 직수로 취급
+function feedAnyOn() { return Object.values(FEED_FILTER_KEY).some(k => patternFilter[k]); }
+function diaperFilterOn(d) {
+  const t = d && d.type;
+  if (t === 'poo') return !!patternFilter.diaper_poo;
+  if (t === 'both') return !!(patternFilter.diaper_pee || patternFilter.diaper_poo);
+  return !!patternFilter.diaper_pee;
+}
+function diaperAnyOn() { return !!(patternFilter.diaper_pee || patternFilter.diaper_poo); }
 function renderDayPatternFilter() {
   const el = document.getElementById('dayPatternFilter'); if (!el) return;
   el.innerHTML = '';
@@ -3988,8 +4004,9 @@ function renderDayPattern() {
   };
   days.forEach(date => {
     const col = document.createElement('div'); col.className = 'daypat-col'; col.style.height = H + 'px';
-    if (patternFilter.feeding) {
+    if (feedAnyOn()) {
       state.feedings.filter(f => f.kidId === k.id && (f.datetime||'').startsWith(date)).forEach(f => {
+        if (!feedFilterOn(f)) return;
         const dt = parseDt(f.datetime); if (!dt) return; any = true;
         const emoji = f.type==='formula'?'🍼':(f.type==='pumpedmilk'?'🥛':(f.type==='solid'?'🥄':(f.type==='mixed'?'🍼':'🤱')));
         const color = f.type==='formula'?'#F5A623':(f.type==='pumpedmilk'?'#60A5FA':(f.type==='solid'?'#C9A227':'#FF8B8B'));
@@ -4013,8 +4030,9 @@ function renderDayPattern() {
         addBar(col, hourOf(dt), durH, '#5B7CE6', '', parts.join(' · '), 'block');
       });
     }
-    if (patternFilter.diaper) {
+    if (diaperAnyOn()) {
       state.diapers.filter(d => d.kidId === k.id && (d.datetime||'').startsWith(date)).forEach(d => {
+        if (!diaperFilterOn(d)) return;
         const dt = parseDt(d.datetime); if (!dt) return; any = true;
         const emoji = d.type==='poo'?'💩':(d.type==='both'?'💧💩':'💧');
         const colorLabels = { yellow:'노란색(정상)', green:'초록색', brown:'갈색', dark:'짙은색', watery:'묽음', hard:'단단함', red:'⚠️붉은색', white:'⚠️흰색' };
@@ -4079,14 +4097,14 @@ document.addEventListener('click', (e) => {
 function collectCareEvents(kidId, fromIso, toIso) {
   const inRange = (s) => s && s.slice(0,10) >= fromIso && s.slice(0,10) <= toIso;
   const ev = [];
-  if (patternFilter.feeding) state.feedings.filter(f => f.kidId === kidId && inRange(f.datetime)).forEach(f => {
+  if (feedAnyOn()) state.feedings.filter(f => f.kidId === kidId && inRange(f.datetime) && feedFilterOn(f)).forEach(f => {
     const dt = parseDt(f.datetime); if (!dt) return;
     const tl = {breast:'모유(직수)',pumpedmilk:'유축수유',formula:'분유',mixed:'혼합',solid:'이유식'}[f.type] || '수유';
     const side = sideLabel(f.side, f.sideOrder);
     const parts = []; if (f.amount) parts.push(f.amount+'ml'); if (f.durationMin) parts.push(f.durationMin+'분'); if (side) parts.push(side); if (f.memo) parts.push(f.memo);
     const fe = f.type === 'formula' ? '🍼' : (f.type === 'pumpedmilk' ? '🥛' : (f.type === 'solid' ? '🥄' : '🤱'));
     const fc = f.type === 'formula' ? '#F5A623' : (f.type === 'pumpedmilk' ? '#60A5FA' : (f.type === 'solid' ? '#C9A227' : '#FF8B8B'));
-    ev.push({ kind:'feeding', start:dt, end: f.durationMin ? new Date(dt.getTime()+f.durationMin*60000) : null, title:fe+' '+tl, sub:parts.join(' · '), amount:Number(f.amount)||0, color:fc, emoji:fe });
+    ev.push({ kind:'feeding', ftype: f.type || 'breast', start:dt, end: f.durationMin ? new Date(dt.getTime()+f.durationMin*60000) : null, title:fe+' '+tl, sub:parts.join(' · '), amount:Number(f.amount)||0, color:fc, emoji:fe });
   });
   // 수면은 자정을 넘기므로 시작 또는 종료가 기간 안이면 포함 (전날 밤잠이 오늘 새벽에 보이게)
   if (patternFilter.sleep) state.sleeps.filter(s => s.kidId === kidId && (inRange(s.startTime) || inRange(s.endTime))).forEach(s => {
@@ -4094,7 +4112,7 @@ function collectCareEvents(kidId, fromIso, toIso) {
     const tl = s.type === 'night' ? '밤잠' : (s.type === 'nap' ? '낮잠' : '수면');
     ev.push({ kind:'sleep', start:st, end:en, title:'😴 '+tl, sub: en ? `${fmtTime(st)}~${fmtTime(en)} · ${fmtDuration(en-st)}` : `${fmtTime(st)}~ 진행 중`, dur: en ? (en-st) : 0, color:'#5B7CE6', emoji:'😴' });
   });
-  if (patternFilter.diaper) state.diapers.filter(d => d.kidId === kidId && inRange(d.datetime)).forEach(d => {
+  if (diaperAnyOn()) state.diapers.filter(d => d.kidId === kidId && inRange(d.datetime) && diaperFilterOn(d)).forEach(d => {
     const dt = parseDt(d.datetime); if (!dt) return;
     const tl = d.type === 'poo' ? '대변' : (d.type === 'both' ? '소변+대변' : '소변');
     const em = d.type === 'poo' ? '💩' : (d.type === 'both' ? '💧💩' : '💧');
@@ -4217,8 +4235,18 @@ function renderStats() {
   const ev = collectCareEvents(k.id, isoDate(from), isoDate(to));
   Object.assign(patternFilter, saved);
   const feeds = ev.filter(e => e.kind === 'feeding').sort((a,b) => a.start - b.start);
-  const totalMl = feeds.reduce((s,e) => s + (e.amount||0), 0);
-  const withMl = feeds.filter(e => e.amount > 0).length;
+  // 종류별 횟수 · 종류별 ml (직수는 ml 없음)
+  const cnt = { breast:0, pumpedmilk:0, formula:0, mixed:0, solid:0 };
+  const ml  = { pumpedmilk:0, formula:0, mixed:0, solid:0 };
+  const mlN = { pumpedmilk:0, formula:0, mixed:0, solid:0 };
+  feeds.forEach(e => {
+    const t = e.ftype || 'breast';
+    if (t in cnt) cnt[t]++;
+    if (t in ml && e.amount > 0) { ml[t] += e.amount; mlN[t]++; }
+  });
+  const totalMl = ml.pumpedmilk + ml.formula + ml.mixed + ml.solid;
+  const withMl = mlN.pumpedmilk + mlN.formula + mlN.mixed + mlN.solid;
+  const cntParts = [cnt.breast ? `직수 ${cnt.breast}` : '', cnt.pumpedmilk ? `유축수유 ${cnt.pumpedmilk}` : '', cnt.formula ? `분유 ${cnt.formula}` : '', cnt.mixed ? `혼합 ${cnt.mixed}` : '', cnt.solid ? `이유식 ${cnt.solid}` : ''].filter(Boolean).join(' · ');
   let gapSum = 0, gapN = 0;
   for (let i = 1; i < feeds.length; i++) { const gp = feeds[i].start - feeds[i-1].start; if (gp > 0 && gp < 24*3600000) { gapSum += gp; gapN++; } }
   const sleeps = ev.filter(e => e.kind === 'sleep'); const sleepMs = sleeps.reduce((s,e) => s + (e.dur||0), 0);
@@ -4226,8 +4254,10 @@ function renderStats() {
   const pee = diapers.filter(e => e.dtype !== 'poo').length, poo = diapers.filter(e => e.dtype === 'poo' || e.dtype === 'both').length;
   const per = (n) => N > 1 ? (n/N).toFixed(1) + '/일' : '';
   host.innerHTML = `
-    <div class="stat-tile"><div class="lb">🍼 수유 횟수</div><div class="vl">${feeds.length}회</div><div class="sb">${per(feeds.length) || '오늘'}</div></div>
-    <div class="stat-tile"><div class="lb">🍼 총 수유량</div><div class="vl">${totalMl ? totalMl.toLocaleString('ko-KR') + 'ml' : '-'}</div><div class="sb">${withMl ? `평균 1회 ${Math.round(totalMl/withMl)}ml` : 'ml 기록 없음'}</div></div>
+    <div class="stat-tile"><div class="lb">🍼 수유 횟수</div><div class="vl">${feeds.length}회</div><div class="sb">${cntParts || (per(feeds.length) || '오늘')}${cntParts && per(feeds.length) ? ` · ${per(feeds.length)}` : ''}</div></div>
+    <div class="stat-tile"><div class="lb">🥛 유축수유량</div><div class="vl">${ml.pumpedmilk ? ml.pumpedmilk.toLocaleString('ko-KR') + 'ml' : '-'}</div><div class="sb">${mlN.pumpedmilk ? `${mlN.pumpedmilk}회 · 평균 1회 ${Math.round(ml.pumpedmilk/mlN.pumpedmilk)}ml` : '기록 없음'}</div></div>
+    <div class="stat-tile"><div class="lb">🍼 분유량</div><div class="vl">${ml.formula ? ml.formula.toLocaleString('ko-KR') + 'ml' : '-'}</div><div class="sb">${mlN.formula ? `${mlN.formula}회 · 평균 1회 ${Math.round(ml.formula/mlN.formula)}ml` : '기록 없음'}</div></div>
+    <div class="stat-tile"><div class="lb">🍼 총 수유량</div><div class="vl">${totalMl ? totalMl.toLocaleString('ko-KR') + 'ml' : '-'}</div><div class="sb">${withMl ? `평균 1회 ${Math.round(totalMl/withMl)}ml${(ml.mixed || ml.solid) ? ` · 혼합/이유식 ${(ml.mixed + ml.solid).toLocaleString('ko-KR')}ml` : ''} · 직수는 ml 없음` : 'ml 기록 없음 (직수만)'}</div></div>
     <div class="stat-tile"><div class="lb">⏱ 평균 수유 간격</div><div class="vl">${gapN ? fmtGap(gapSum/gapN) : '-'}</div><div class="sb">${gapN ? `${gapN}구간 기준` : '2회 이상 필요'}</div></div>
     <div class="stat-tile"><div class="lb">😴 총 수면</div><div class="vl">${sleepMs ? fmtDuration(sleepMs) : '-'}</div><div class="sb">${sleeps.length}회${N > 1 && sleepMs ? ` · 하루 ${fmtDuration(sleepMs/N)}` : ''}</div></div>
     <div class="stat-tile"><div class="lb">💧 소변</div><div class="vl">${pee}개</div><div class="sb">${per(pee)}</div></div>
