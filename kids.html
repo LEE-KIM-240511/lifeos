@@ -844,7 +844,7 @@ header{display:flex;align-items:center;justify-content:space-between;margin-bott
     <div class="bt-sub" style="font-size:11px;color:#777;">슬라이더로 분 단위 · −1h/+1h 버튼으로 1시간씩</div>
 
     <div class="bt-block" id="feedSideBlock">
-      <div class="bt-block-label">모유 방향 · 수유 시간</div>
+      <div class="bt-block-label">모유 방향</div>
       <div class="bt-seg" id="feedSideSeg">
         <button type="button" data-side="left">왼쪽</button>
         <button type="button" data-side="right">오른쪽</button>
@@ -854,6 +854,10 @@ header{display:flex;align-items:center;justify-content:space-between;margin-bott
         <button type="button" data-order="LR">왼쪽 → 오른쪽</button>
         <button type="button" data-order="RL">오른쪽 → 왼쪽</button>
       </div>
+    </div>
+
+    <div class="bt-block" id="feedDurBlock">
+      <div class="bt-block-label">수유 시간 (끝나는 시간)</div>
       <div class="bt-sub">수유 시간 : <span id="feedDurLabel">0분</span></div>
       <div class="bt-stepper">
         <button type="button" data-dur="-5">−5분</button>
@@ -2616,6 +2620,15 @@ function renderCareSummary() {
 
   // 수유 통계
   const feedAmt = feedings.reduce((s,f) => s + (Number(f.amount) || 0), 0);
+  // 종류별 횟수/양 (모유=직수, 유축=유축수유(젖병), 분유)
+  const fc = { breast:0, pumpedmilk:0, formula:0, mixed:0, solid:0 };
+  const fm = { pumpedmilk:0, formula:0 };
+  feedings.forEach(f => { const t = f.type || 'breast'; if (t in fc) fc[t]++; if (t in fm) fm[t] += Number(f.amount) || 0; });
+  const feedDetail = [
+    fc.breast ? `모유 ${fc.breast}회` : '', fc.pumpedmilk ? `유축 ${fc.pumpedmilk}회` : '', fc.formula ? `분유 ${fc.formula}회` : '',
+    fc.mixed ? `혼합 ${fc.mixed}회` : '', fc.solid ? `이유식 ${fc.solid}회` : '',
+    fm.pumpedmilk ? `유축 ${fm.pumpedmilk}ml` : '', fm.formula ? `분유 ${fm.formula}ml` : '',
+  ].filter(Boolean).join(' · ');
   // 수유 간격 (마지막 두 개)
   let lastFeedAgo = '-';
   const sortedFeed = feedings.slice().sort((a,b) => (b.datetime||'').localeCompare(a.datetime||''));
@@ -2646,7 +2659,8 @@ function renderCareSummary() {
     <div class="care-summary-card" style="background:#FFF7ED;border-color:#FED7AA;">
       <div class="label">🍼 수유</div>
       <div class="value" style="color:#9A3412;">${feedings.length}회</div>
-      <div class="sub">${feedAmt > 0 ? feedAmt + 'mL · ' : ''}${lastFeedAgo}</div>
+      <div class="sub">${lastFeedAgo}</div>
+      ${feedDetail ? `<div class="sub" style="margin-top:2px;line-height:1.4;">${feedDetail}</div>` : ''}
     </div>
     <div class="care-summary-card" style="background:#EEF2FF;border-color:#C7D2FE;">
       <div class="label">😴 수면</div>
@@ -3010,6 +3024,7 @@ function refreshFeedSheet() {
   document.getElementById('feedOrderSeg').style.display = (isBreast && s.side === 'both') ? '' : 'none';
   const showAmt = s.type === 'formula' || s.type === 'pumpedmilk' || s.type === 'mixed' || s.type === 'solid';
   document.getElementById('feedAmtBlock').style.display = showAmt ? '' : 'none';
+  document.getElementById('feedDurBlock').style.display = '';   // 수유 시간(끝나는 시간)은 모든 종류에서 입력 가능
 }
 function renderFeedTags() {
   const wrap = document.getElementById('feedTags'); if (!wrap) return; wrap.innerHTML = '';
@@ -4246,7 +4261,8 @@ function renderStats() {
   });
   const totalMl = ml.pumpedmilk + ml.formula + ml.mixed + ml.solid;
   const withMl = mlN.pumpedmilk + mlN.formula + mlN.mixed + mlN.solid;
-  const cntParts = [cnt.breast ? `직수 ${cnt.breast}` : '', cnt.pumpedmilk ? `유축수유 ${cnt.pumpedmilk}` : '', cnt.formula ? `분유 ${cnt.formula}` : '', cnt.mixed ? `혼합 ${cnt.mixed}` : '', cnt.solid ? `이유식 ${cnt.solid}` : ''].filter(Boolean).join(' · ');
+  const cntParts = [cnt.breast ? `모유 ${cnt.breast}` : '', cnt.pumpedmilk ? `유축 ${cnt.pumpedmilk}` : '', cnt.formula ? `분유 ${cnt.formula}` : '', cnt.mixed ? `혼합 ${cnt.mixed}` : '', cnt.solid ? `이유식 ${cnt.solid}` : ''].filter(Boolean).join(' · ');
+  const mlParts = [`유축수유량 ${ml.pumpedmilk.toLocaleString('ko-KR')}ml`, `분유량 ${ml.formula.toLocaleString('ko-KR')}ml`, (ml.mixed || ml.solid) ? `혼합/이유식 ${(ml.mixed + ml.solid).toLocaleString('ko-KR')}ml` : ''].filter(Boolean).join(' · ');
   let gapSum = 0, gapN = 0;
   for (let i = 1; i < feeds.length; i++) { const gp = feeds[i].start - feeds[i-1].start; if (gp > 0 && gp < 24*3600000) { gapSum += gp; gapN++; } }
   const sleeps = ev.filter(e => e.kind === 'sleep'); const sleepMs = sleeps.reduce((s,e) => s + (e.dur||0), 0);
@@ -4255,9 +4271,7 @@ function renderStats() {
   const per = (n) => N > 1 ? (n/N).toFixed(1) + '/일' : '';
   host.innerHTML = `
     <div class="stat-tile"><div class="lb">🍼 수유 횟수</div><div class="vl">${feeds.length}회</div><div class="sb">${cntParts || (per(feeds.length) || '오늘')}${cntParts && per(feeds.length) ? ` · ${per(feeds.length)}` : ''}</div></div>
-    <div class="stat-tile"><div class="lb">🥛 유축수유량</div><div class="vl">${ml.pumpedmilk ? ml.pumpedmilk.toLocaleString('ko-KR') + 'ml' : '-'}</div><div class="sb">${mlN.pumpedmilk ? `${mlN.pumpedmilk}회 · 평균 1회 ${Math.round(ml.pumpedmilk/mlN.pumpedmilk)}ml` : '기록 없음'}</div></div>
-    <div class="stat-tile"><div class="lb">🍼 분유량</div><div class="vl">${ml.formula ? ml.formula.toLocaleString('ko-KR') + 'ml' : '-'}</div><div class="sb">${mlN.formula ? `${mlN.formula}회 · 평균 1회 ${Math.round(ml.formula/mlN.formula)}ml` : '기록 없음'}</div></div>
-    <div class="stat-tile"><div class="lb">🍼 총 수유량</div><div class="vl">${totalMl ? totalMl.toLocaleString('ko-KR') + 'ml' : '-'}</div><div class="sb">${withMl ? `평균 1회 ${Math.round(totalMl/withMl)}ml${(ml.mixed || ml.solid) ? ` · 혼합/이유식 ${(ml.mixed + ml.solid).toLocaleString('ko-KR')}ml` : ''} · 직수는 ml 없음` : 'ml 기록 없음 (직수만)'}</div></div>
+    <div class="stat-tile"><div class="lb">🍼 총 수유량</div><div class="vl">${totalMl ? totalMl.toLocaleString('ko-KR') + 'ml' : '-'}</div><div class="sb">${mlParts}${withMl ? ` · 평균 1회 ${Math.round(totalMl/withMl)}ml` : ''}</div></div>
     <div class="stat-tile"><div class="lb">⏱ 평균 수유 간격</div><div class="vl">${gapN ? fmtGap(gapSum/gapN) : '-'}</div><div class="sb">${gapN ? `${gapN}구간 기준` : '2회 이상 필요'}</div></div>
     <div class="stat-tile"><div class="lb">😴 총 수면</div><div class="vl">${sleepMs ? fmtDuration(sleepMs) : '-'}</div><div class="sb">${sleeps.length}회${N > 1 && sleepMs ? ` · 하루 ${fmtDuration(sleepMs/N)}` : ''}</div></div>
     <div class="stat-tile"><div class="lb">💧 소변</div><div class="vl">${pee}개</div><div class="sb">${per(pee)}</div></div>
