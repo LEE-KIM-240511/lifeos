@@ -2617,6 +2617,11 @@ function renderCareSummary() {
   const baths = kidBaths(k.id, dateStr);
   const pumps = kidPumpings(k.id, dateStr);
   const pumpAmt = pumps.reduce((s,p) => s + (Number(p.amount) || 0), 0);
+  // 기저귀: 소변/대변 횟수 (소변+대변은 양쪽 모두 집계)
+  const diapersToday = state.diapers.filter(d => d.kidId === k.id && (d.datetime || '').startsWith(dateStr));
+  const peeN = diapersToday.filter(d => d.type === 'pee' || d.type === 'both').length;
+  const pooN = diapersToday.filter(d => d.type === 'poo' || d.type === 'both').length;
+  const diaperDetail = [peeN ? `소변 ${peeN}` : '', pooN ? `대변 ${pooN}` : ''].filter(Boolean).join(' · ');
 
   // 수유 통계
   const feedAmt = feedings.reduce((s,f) => s + (Number(f.amount) || 0), 0);
@@ -2660,6 +2665,11 @@ function renderCareSummary() {
       <div class="label">🍼 수유</div>
       <div class="value" style="color:#9A3412;">${feedings.length}회</div>
       <div class="sub" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${feedDetail || '기록 없음'}</div>
+    </div>
+    <div class="care-summary-card" style="background:#FEFCE8;border-color:#FDE68A;">
+      <div class="label">💩 기저귀</div>
+      <div class="value" style="color:#854D0E;">${diapersToday.length}회</div>
+      <div class="sub" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${diaperDetail || '기록 없음'}</div>
     </div>
     <div class="care-summary-card" style="background:#EEF2FF;border-color:#C7D2FE;">
       <div class="label">😴 수면</div>
@@ -4270,7 +4280,7 @@ function renderStats() {
   const per = (n) => N > 1 ? (n/N).toFixed(1) + '/일' : '';
   host.innerHTML = `
     <div class="stat-tile"><div class="lb">🍼 수유 횟수</div><div class="vl">${feeds.length}회</div><div class="sb">${cntParts || (per(feeds.length) || '오늘')}${cntParts && per(feeds.length) ? ` · ${per(feeds.length)}` : ''}</div></div>
-    <div class="stat-tile"><div class="lb">🍼 총 수유량</div><div class="vl">${totalMl ? totalMl.toLocaleString('ko-KR') + 'ml' : '-'}</div><div class="sb" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${mlParts}${withMl ? ` · 평균 ${Math.round(totalMl/withMl)}ml` : ''}</div></div>
+    <div class="stat-tile"><div class="lb">🍼 총 수유량</div><div class="vl">${totalMl ? totalMl.toLocaleString('ko-KR') + 'ml' : '-'}</div><div class="sb" style="line-height:1.35;">${mlParts}${withMl ? ` · 평균 ${Math.round(totalMl/withMl)}ml` : ''}</div></div>
     <div class="stat-tile"><div class="lb">⏱ 평균 수유 간격</div><div class="vl">${gapN ? fmtGap(gapSum/gapN) : '-'}</div><div class="sb">${gapN ? `${gapN}구간 기준` : '2회 이상 필요'}</div></div>
     <div class="stat-tile"><div class="lb">😴 총 수면</div><div class="vl">${sleepMs ? fmtDuration(sleepMs) : '-'}</div><div class="sb">${sleeps.length}회${N > 1 && sleepMs ? ` · 하루 ${fmtDuration(sleepMs/N)}` : ''}</div></div>
     <div class="stat-tile"><div class="lb">💧 소변</div><div class="vl">${pee}개</div><div class="sb">${per(pee)}</div></div>
