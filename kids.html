@@ -525,6 +525,10 @@ header{display:flex;align-items:center;justify-content:space-between;margin-bott
       </div>
       <div id="kidsBackupInfo" style="font-size:11px;color:var(--text-tertiary);margin-top:8px;"></div>
     </div>
+    <div class="card" style="margin-top:12px;">
+      <h3 style="font-size:14px;margin-bottom:6px;">☁️ 동기화 상태</h3>
+      <div id="kidsSyncInfo" style="font-size:12px;line-height:1.6;color:var(--text-secondary);">확인 중…</div>
+    </div>
   </div>
 
   <!-- 예방접종 섹션 -->
@@ -4590,6 +4594,37 @@ function renderKidsBackupInfo() {
   const days = Math.floor((new Date() - new Date(last)) / 86400000);
   el.textContent = `마지막 백업: ${last} (${days === 0 ? '오늘' : days + '일 전'})${days >= 7 ? ' · 오래됐어요, 다시 저장해 두세요' : ''}`;
 }
+// ☁️ 동기화 상태: 데이터 크기(Firestore 문서 한도 1MB) · 사진 비중 · 마지막 업로드 성공/실패
+function kidsDataBytes() {
+  let raw = ''; try { raw = localStorage.getItem('lifeos-kids-v1') || ''; } catch (_) {}
+  let bytes = 0; try { bytes = new Blob([raw]).size; } catch (_) { bytes = raw.length; }
+  let photoBytes = 0, photoN = 0;
+  (state.entries || []).forEach(e => (e.photos || []).forEach(p => { photoN++; photoBytes += (p || '').length; }));
+  return { bytes, photoBytes, photoN };
+}
+function renderKidsSyncInfo() {
+  const el = document.getElementById('kidsSyncInfo'); if (!el) return;
+  const fmtB = (b) => b >= 1048576 ? (b / 1048576).toFixed(2) + 'MB' : Math.round(b / 1024) + 'KB';
+  const { bytes, photoBytes, photoN } = kidsDataBytes();
+  const LIMIT = 1048576; // Firestore 문서 한도 1MiB
+  const over = bytes > LIMIT;
+  const pct = Math.round(bytes / LIMIT * 100);
+  let last = null; try { last = JSON.parse(localStorage.getItem('lifeos-kids-lastsync') || 'null'); } catch (_) {}
+  const configured = !!(window.LifeOSSync && LifeOSSync.isConfigured());
+  const dev = configured ? LifeOSSync.getDeviceLabel() : '-';
+  let lastLine = '아직 이 기기에서 업로드한 적 없음';
+  if (last) {
+    const t = new Date(last.at); const ts = `${t.getMonth()+1}/${t.getDate()} ${String(t.getHours()).padStart(2,'0')}:${String(t.getMinutes()).padStart(2,'0')}`;
+    lastLine = last.ok ? `✅ 마지막 업로드 성공 ${ts}` : `❌ 마지막 업로드 <b style="color:#B91C1C;">실패</b> ${ts}${last.err ? ` (${escapeHtml(String(last.err)).slice(0, 80)})` : ''}`;
+  }
+  el.innerHTML = `
+    <div>이 기기: <b>${escapeHtml(dev)}</b>${configured ? '' : ' · <span style="color:#B91C1C;">동기화 설정 안 됨</span>'}</div>
+    <div>데이터 크기: <b style="color:${over ? '#B91C1C' : 'inherit'};">${fmtB(bytes)}</b> / 한도 1MB (${pct}%)${over ? ' · <b style="color:#B91C1C;">한도 초과 → 업로드 전부 실패 중</b>' : ''}</div>
+    <div>그중 일기 사진: ${photoN}장 · ${fmtB(photoBytes)}</div>
+    <div>${lastLine}</div>
+    ${over ? '<div style="margin-top:6px;color:#B91C1C;">사진이 동기화 한도를 넘겨서 수유·기저귀 기록까지 다른 기기로 안 넘어가요. 사진을 동기화에서 분리하는 수정이 필요해요.</div>' : ''}
+  `;
+}
 document.getElementById('kidsBackupInput').addEventListener('change', (e) => {
   const file = e.target.files && e.target.files[0]; e.target.value = '';
   if (!file) return;
@@ -4608,6 +4643,8 @@ document.getElementById('kidsBackupInput').addEventListener('change', (e) => {
   reader.readAsText(file, 'utf-8');
 });
 renderKidsBackupInfo();
+renderKidsSyncInfo();
+window.addEventListener('kids-sync-result', renderKidsSyncInfo);
 
 // ============================
 // ☁️ 가족 실시간 동기화 (Firebase Firestore)
@@ -4639,7 +4676,15 @@ renderKidsBackupInfo();
         if (raw) {
           try {
             const data = JSON.parse(raw);
-            LifeOSSync.save(MODULE_KEY, data).catch(e => console.warn('sync 실패:', e));
+            let bytes = raw.length; try { bytes = new Blob([raw]).size; } catch(_) {}
+            const record = (ok, err) => {
+              try { localStorage.setItem('lifeos-kids-lastsync', JSON.stringify({ at: Date.now(), ok, err: err || null, bytes })); } catch(_) {}
+              try { window.dispatchEvent(new Event('kids-sync-result')); } catch(_) {}
+              if (!ok) safeToast(bytes > 1048576 ? `❌ 동기화 실패 — 데이터가 1MB 한도 초과 (${(bytes/1048576).toFixed(2)}MB)` : '❌ 동기화 실패 — 다른 기기에 안 넘어갔어요');
+            };
+            LifeOSSync.save(MODULE_KEY, data)
+              .then(ok => record(!!ok, ok ? null : (bytes > 1048576 ? '1MB 한도 초과' : '업로드 실패')))
+              .catch(e => { console.warn('sync 실패:', e); record(false, e && e.message); });
           } catch(e) {}
         }
       }
