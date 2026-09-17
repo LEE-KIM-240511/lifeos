@@ -591,8 +591,14 @@ header{display:flex;align-items:center;justify-content:space-between;margin-bott
     <!-- 주간패턴 (7일 × 24시간) -->
     <div class="chart-pane active" id="chartPane-week">
       <div class="card">
-        <h3 style="font-size:13px;margin-bottom:10px;">📅 주간패턴 (최근 7일)</h3>
-        <div style="font-size:11px;color:var(--text-tertiary);margin:-6px 0 10px;">막대에 마우스를 올리거나(모바일은 탭) 상세가 떠요 · 위 칩으로 항목 끄기/켜기</div>
+        <h3 style="font-size:13px;margin-bottom:8px;">📅 주간패턴 (7일)</h3>
+        <div class="clock-nav">
+          <button type="button" class="btn small" onclick="shiftPatDate(-1)">‹ 이전 주</button>
+          <div class="clock-date" id="patDateLabel" style="font-size:13px;"></div>
+          <button type="button" class="btn small" onclick="shiftPatDate(1)">다음 주 ›</button>
+          <button type="button" class="btn small" onclick="shiftPatDate(0)" style="margin-left:auto;">이번 주</button>
+        </div>
+        <div style="font-size:11px;color:var(--text-tertiary);margin:0 0 10px;">막대를 탭하면 상세가 떠요 · 칩으로 항목 끄기/켜기</div>
         <div class="daypat-filter" id="dayPatternFilter"></div>
         <div class="daypat-wrap">
           <div class="daypat-chart" id="dayPatternChart"></div>
@@ -615,9 +621,15 @@ header{display:flex;align-items:center;justify-content:space-between;margin-bott
     <!-- 통계 -->
     <div class="chart-pane" id="chartPane-stats">
       <div class="stats-range">
-        <button type="button" class="chart-subtab small" data-srange="day" onclick="setStatsRange('day')">오늘</button>
-        <button type="button" class="chart-subtab small active" data-srange="week" onclick="setStatsRange('week')">주 (7일)</button>
+        <button type="button" class="chart-subtab small active" data-srange="day" onclick="setStatsRange('day')">일</button>
+        <button type="button" class="chart-subtab small" data-srange="week" onclick="setStatsRange('week')">주 (7일)</button>
         <button type="button" class="chart-subtab small" data-srange="month" onclick="setStatsRange('month')">월 (30일)</button>
+      </div>
+      <div class="clock-nav" style="margin-bottom:10px;">
+        <button type="button" class="btn small" onclick="shiftStatsDate(-1)">‹</button>
+        <div class="clock-date" id="statsDateLabel" style="font-size:13px;"></div>
+        <button type="button" class="btn small" onclick="shiftStatsDate(1)">›</button>
+        <button type="button" class="btn small" onclick="shiftStatsDate(0)" style="margin-left:auto;">오늘</button>
       </div>
       <div class="stats-tiles" id="statsTiles"></div>
       <div class="card" style="margin-bottom:14px;">
@@ -1170,8 +1182,10 @@ let state = {
   pregnancy: [],     // 임신/태교: {id, kidId, date, kind: 'kick'|'checkup'|'diary'|'photo', text, weeks, weight, memo}
   checklist: {},     // 행정업무 체크: { [kidId]: { done: {taskId:true}, custom: [{id,title}] } }
   chartTab: 'week',  // 패턴/통계 서브탭: clock | week | interval | stats
+  patDate: null,     // 주간패턴 기준(끝) 날짜 ISO, null = 오늘(이번 주)
+  statsDate: null,   // 통계 기준(끝) 날짜 ISO, null = 오늘
   clockDate: null,   // 일과표 날짜 (null = 오늘)
-  statsRange: 'week',// 통계 기간: day | week | month
+  statsRange: 'day', // 통계 기간: day | week | month (기본 = 일·오늘)
   currentKidId: null, currentSection: 'diary',
   careSubTab: 'today',
   careDate: null,
@@ -4120,9 +4134,17 @@ function renderDayPattern() {
   if (!k) { wrap.style.display = 'none'; if (emptyEl) emptyEl.style.display = ''; return; }
   const H = 520;
   host.style.height = H + 'px';
-  const now = new Date();
+  // 7일 고정, 기준(끝) 날짜는 ‹ 이전 주 / 다음 주 › 로 이동
+  const N = 7;
+  const end = state.patDate ? parseDt(state.patDate + 'T00:00') : new Date();
   const days = [];
-  for (let i = 6; i >= 0; i--) { const d = new Date(now); d.setDate(now.getDate() - i); days.push(isoDate(d)); }
+  for (let i = N - 1; i >= 0; i--) { const d = new Date(end); d.setDate(end.getDate() - i); days.push(isoDate(d)); }
+  const lab = document.getElementById('patDateLabel');
+  if (lab) {
+    const dn = ['일','월','화','수','목','금','토'];
+    const f = (iso) => { const d = parseDt(iso + 'T00:00'); return `${d.getMonth()+1}/${d.getDate()}(${dn[d.getDay()]})`; };
+    lab.textContent = `${f(days[0])} ~ ${f(days[N-1])}${state.patDate ? '' : ' · 이번 주'}`;
+  }
   // 시간 그리드 + 라벨
   [0,3,6,9,12,15,18,21,24].forEach(h => {
     const y = h / 24 * H;
@@ -4235,12 +4257,13 @@ function renderDayPattern() {
     }
     host.appendChild(col);
   });
-  // 날짜 라벨
-  days.forEach((date, i) => {
+  // 날짜 라벨 (오늘은 빨간색)
+  const today = isoDate(new Date());
+  days.forEach((date) => {
     const e = document.createElement('div');
     const d = parseDt(date + 'T00:00');
     e.textContent = `${d.getMonth()+1}/${d.getDate()}`;
-    if (i === days.length - 1) e.style.color = '#FF6B6B';
+    if (date === today) e.style.color = '#FF6B6B';
     daysEl.appendChild(e);
   });
   wrap.style.display = any ? '' : 'none';
@@ -4310,6 +4333,29 @@ function daysSinceBirth(k, date) {
   return Math.floor((d - b)/86400000) + 1;
 }
 window.setChartTab = (t) => { state.chartTab = t; renderChart(); };
+// 주간패턴: 주 단위 이동 (‹ 이전 주 / 다음 주 › / 이번 주)
+window.shiftPatDate = (dir) => {
+  if (dir === 0) state.patDate = null;
+  else {
+    const cur = state.patDate ? parseDt(state.patDate + 'T00:00') : new Date();
+    cur.setDate(cur.getDate() + dir * 7);
+    state.patDate = isoDate(cur);
+    if (state.patDate >= isoDate(new Date())) state.patDate = null;   // 오늘 이후로는 안 감
+  }
+  renderDayPattern();
+};
+// 통계: 기간(일/주/월) + 기준 날짜 이동 (‹ › / 오늘)
+window.shiftStatsDate = (dir) => {
+  if (dir === 0) state.statsDate = null;
+  else {
+    const cur = state.statsDate ? parseDt(state.statsDate + 'T00:00') : new Date();
+    cur.setDate(cur.getDate() + dir * statsDays());
+    state.statsDate = isoDate(cur);
+    if (state.statsDate >= isoDate(new Date())) state.statsDate = null;
+  }
+  renderChart();
+};
+function statsEndDate() { return state.statsDate ? parseDt(state.statsDate + 'T00:00') : new Date(); }
 function applyChartTab() {
   const t = state.chartTab || 'week';
   document.querySelectorAll('.chart-subtab[data-ctab]').forEach(b => b.classList.toggle('active', b.dataset.ctab === t));
@@ -4389,8 +4435,14 @@ function statsDays() { return state.statsRange === 'day' ? 1 : (state.statsRange
 // 통계 타일 (필터와 무관하게 전체 항목 집계)
 function renderStats() {
   const k = getKid(); const host = document.getElementById('statsTiles'); if (!k || !host) return;
-  document.querySelectorAll('.chart-subtab[data-srange]').forEach(b => b.classList.toggle('active', b.dataset.srange === (state.statsRange || 'week')));
-  const N = statsDays(); const to = new Date(); const from = new Date(); from.setDate(to.getDate() - (N-1));
+  document.querySelectorAll('.chart-subtab[data-srange]').forEach(b => b.classList.toggle('active', b.dataset.srange === (state.statsRange || 'day')));
+  const N = statsDays(); const to = statsEndDate(); const from = new Date(to); from.setDate(to.getDate() - (N-1));
+  const lab = document.getElementById('statsDateLabel');
+  if (lab) {
+    const dn = ['일','월','화','수','목','금','토'];
+    const f = (d) => `${d.getMonth()+1}/${d.getDate()}(${dn[d.getDay()]})`;
+    lab.textContent = N === 1 ? f(to) + (state.statsDate ? '' : ' · 오늘') : `${f(from)} ~ ${f(to)}`;
+  }
   const saved = { ...patternFilter }; Object.keys(patternFilter).forEach(x => patternFilter[x] = true);
   const ev = collectCareEvents(k.id, isoDate(from), isoDate(to));
   Object.assign(patternFilter, saved);
@@ -4434,9 +4486,9 @@ function renderChart() {
   renderDayPatternFilter();
   renderDayPattern();
 
-  const now = new Date();
+  const now = statsEndDate();   // 통계 기준(끝) 날짜 — ‹ › 로 이동
   const days = [];
-  const N_DAYS = statsDays(); // 통계 기간(오늘/7일/30일)에 따라 차트 일수 결정
+  const N_DAYS = statsDays(); // 통계 기간(일/7일/30일)에 따라 차트 일수 결정
   for (let i = N_DAYS - 1; i >= 0; i--) {
     const d = new Date(now); d.setDate(now.getDate() - i);
     days.push(isoDate(d));
