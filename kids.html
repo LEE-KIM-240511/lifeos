@@ -1221,8 +1221,117 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 });
 
+// ============================
+// 🖼️ 일기 사진 저장소 — 기록 본문(lifeos-kids-v1)과 분리
+//  · 사진 base64는 lifeos-kids-photos-v1 에 {id: dataURL} 로 보관
+//  · 일기의 photos 배열에는 'fs:<id>' 참조만 남김 → 기록 본문이 작아져 동기화 1MB 한도에 안 걸림
+//  · id는 사진 내용으로 결정(해시) → 어느 기기에서 만들어도 같은 사진 = 같은 id (중복 없음)
+//  · 다른 기기 사진은 Firestore families/{fid}/kidsPhotos/{id} 에서 받아와 저장소에 채움
+// ============================
+const PHOTO_STORE_KEY = 'lifeos-kids-photos-v1';
+const PHOTO_UP_KEY = 'lifeos-kids-photos-uploaded';
+let photoStore = null;
+function loadPhotoStore() {
+  if (photoStore) return photoStore;
+  try { photoStore = JSON.parse(localStorage.getItem(PHOTO_STORE_KEY) || '{}') || {}; } catch (_) { photoStore = {}; }
+  return photoStore;
+}
+function savePhotoStore() {
+  try { localStorage.setItem(PHOTO_STORE_KEY, JSON.stringify(loadPhotoStore())); return true; }
+  catch (e) { console.warn('[kids] 사진 저장소 저장 실패', e); return false; }
+}
+function photoIdOf(dataUrl) {
+  let h1 = 0x811c9dc5, h2 = 0x01000193;
+  for (let i = 0; i < dataUrl.length; i++) {
+    const c = dataUrl.charCodeAt(i);
+    h1 = Math.imul(h1 ^ c, 16777619) >>> 0;
+    h2 = Math.imul(h2 ^ c, 0x5bd1e995) >>> 0;
+  }
+  return 'p' + h1.toString(16).padStart(8, '0') + h2.toString(16).padStart(8, '0') + '_' + dataUrl.length.toString(36);
+}
+function isPhotoRef(p) { return typeof p === 'string' && p.startsWith('fs:'); }
+function isPhotoData(p) { return typeof p === 'string' && p.startsWith('data:'); }
+function normPhotoKey(p) { return isPhotoData(p) ? 'fs:' + photoIdOf(p) : p; }
+// 참조 → 실제 dataURL (없으면 클라우드에서 가져오기 요청 후 null)
+function photoSrc(p) {
+  if (!p) return null;
+  if (!isPhotoRef(p)) return p;
+  const d = loadPhotoStore()[p.slice(3)];
+  if (d) return d;
+  requestPhotoFetch(p.slice(3));
+  return null;
+}
+// 인라인 base64 → 저장소로 이동하고 참조로 교체. 저장소 기록이 성공했을 때만 교체(실패하면 원본 유지 → 유실 없음)
+function migrateEntryPhotos() {
+  const st = loadPhotoStore();
+  const added = [];
+  const plan = [];
+  (state.entries || []).forEach(e => {
+    if (!Array.isArray(e.photos)) return;
+    e.photos.forEach((p, i) => {
+      if (!isPhotoData(p)) return;
+      const id = photoIdOf(p);
+      if (!st[id]) { st[id] = p; added.push(id); }
+      plan.push({ e, i, id });
+    });
+  });
+  if (!plan.length) return false;
+  if (added.length && !savePhotoStore()) {
+    added.forEach(id => { delete st[id]; });   // 저장소에 못 넣었으면 원본 그대로 둔다
+    return false;
+  }
+  plan.forEach(({ e, i, id }) => { e.photos[i] = 'fs:' + id; });
+  // 같은 사진 두 번 붙은 경우 정리
+  (state.entries || []).forEach(e => { if (Array.isArray(e.photos)) e.photos = e.photos.filter((p, i, a) => a.indexOf(p) === i); });
+  return true;
+}
+function photoUploadedMap() { try { return JSON.parse(localStorage.getItem(PHOTO_UP_KEY) || '{}') || {}; } catch (_) { return {}; } }
+function markPhotoUploaded(id) { const up = photoUploadedMap(); up[id] = true; try { localStorage.setItem(PHOTO_UP_KEY, JSON.stringify(up)); } catch (_) {} }
+let photoSyncBusy = false, photoUploadFailed = 0;
+// 이 기기 저장소에 있고 일기가 참조 중인 사진 중 아직 클라우드에 안 올라간 것 업로드
+async function syncPhotosUp() {
+  if (photoSyncBusy) return;
+  if (!window.LifeOSSync || !LifeOSSync.isConfigured() || typeof LifeOSSync.saveDoc !== 'function') return;
+  photoSyncBusy = true;
+  try {
+    const st = loadPhotoStore(); const up = photoUploadedMap();
+    const refs = new Set();
+    (state.entries || []).forEach(e => (e.photos || []).forEach(p => { if (isPhotoRef(p)) refs.add(p.slice(3)); }));
+    photoUploadFailed = 0;
+    for (const id of refs) {
+      if (up[id] || !st[id]) continue;
+      const ok = await LifeOSSync.saveDoc('kidsPhotos', id, { data: st[id], at: Date.now() });
+      if (ok) markPhotoUploaded(id); else photoUploadFailed++;
+    }
+  } catch (e) { console.warn('[kids] 사진 업로드 실패', e); }
+  photoSyncBusy = false;
+  if (typeof renderKidsSyncInfo === 'function') renderKidsSyncInfo();
+}
+const photoFetching = new Set(); const photoFetchFailedAt = {};
+function requestPhotoFetch(id) {
+  if (photoFetching.has(id)) return;
+  if (photoFetchFailedAt[id] && Date.now() - photoFetchFailedAt[id] < 60000) return;   // 실패 후 1분간 재시도 안 함
+  if (!window.LifeOSSync || !LifeOSSync.isConfigured() || typeof LifeOSSync.loadDoc !== 'function') return;
+  photoFetching.add(id);
+  LifeOSSync.loadDoc('kidsPhotos', id).then(d => {
+    if (d && d.data) {
+      loadPhotoStore()[id] = d.data; savePhotoStore(); markPhotoUploaded(id);
+      if (state.currentSection === 'diary' && typeof renderDiary === 'function') renderDiary();
+    } else photoFetchFailedAt[id] = Date.now();
+  }).catch(() => { photoFetchFailedAt[id] = Date.now(); }).finally(() => photoFetching.delete(id));
+}
+function photoStoreStats() {
+  const st = loadPhotoStore(); const up = photoUploadedMap();
+  let n = 0, bytes = 0, pending = 0, missing = 0;
+  const refs = new Set();
+  (state.entries || []).forEach(e => (e.photos || []).forEach(p => { if (isPhotoRef(p)) refs.add(p.slice(3)); }));
+  refs.forEach(id => { if (st[id]) { n++; bytes += st[id].length; if (!up[id]) pending++; } else missing++; });
+  return { n, bytes, pending, missing, failed: photoUploadFailed };
+}
+
 function save() {
   try {
+    migrateEntryPhotos();   // 사진 base64는 별도 저장소로 (본문을 작게 유지)
     localStorage.setItem(STORAGE_KEY, JSON.stringify({
       kids: state.kids, entries: state.entries, growth: state.growth, milestones: state.milestones,
       feedings: state.feedings, pumpings: state.pumpings, sleeps: state.sleeps, temperatures: state.temperatures,
@@ -1265,6 +1374,8 @@ function load() {
     if (p.pregnancy) state.pregnancy = p.pregnancy;
     if (p.checklist) state.checklist = p.checklist;
   } catch(e){}
+  // 마이그레이션: 옛 형식(일기 안 base64 사진) → 사진 저장소로 분리. 바뀐 게 있으면 곧바로 다시 저장
+  try { if (migrateEntryPhotos()) setTimeout(() => { try { save(); } catch (_) {} }, 0); } catch (e) { console.warn('[kids] 사진 마이그레이션 실패', e); }
   // 마이그레이션: 분류 데이터가 비어있으면 기본값으로 시드
   if (!state.shoppingCategories || state.shoppingCategories.length === 0) {
     state.shoppingCategories = defaultShoppingCategories();
@@ -1426,7 +1537,11 @@ function renderDiary() {
   if (entries.length === 0) { list.innerHTML = `<div class="empty"><div class="big">📔</div><div class="label">아직 일기가 없어요</div><div class="sub">첫 기록을 시작해보세요</div></div>`; return; }
   list.innerHTML = entries.map(e => {
     const tags = (e.tags || []).map(t => `<span class="entry-tag">#${escapeHtml(t)}</span>`).join('');
-    const photos = (e.photos || []).map(p => `<div class="entry-photo" onclick="openLightbox('${p}')"><img src="${p}" alt="사진"></div>`).join('');
+    const photos = (e.photos || []).map((p, i) => {
+      const src = photoSrc(p);
+      if (!src) return `<div class="entry-photo" style="display:flex;align-items:center;justify-content:center;font-size:10px;color:var(--text-tertiary);background:var(--bg);min-height:80px;">☁️ 사진<br>불러오는 중</div>`;
+      return `<div class="entry-photo" onclick="openEntryPhoto('${e.id}',${i})"><img src="${src}" alt="사진"></div>`;
+    }).join('');
     const photosHtml = photos ? `<div class="entry-photos">${photos}</div>` : '';
     return `<div class="entry-card"><div class="entry-head"><div><div class="entry-date">${e.date}</div>${e.title ? `<div class="entry-title">${escapeHtml(e.title)}</div>` : ''}</div><button class="btn small" onclick="editEntry('${e.id}')">수정</button></div>${e.text ? `<div class="entry-text">${escapeHtml(e.text)}</div>` : ''}${photosHtml}${tags ? `<div class="entry-tags">${tags}</div>` : ''}</div>`;
   }).join('');
@@ -1531,7 +1646,7 @@ function renderEntryPhotoGrid() {
 
   let html = photos.map((p, i) => `
     <div class="photo-attach-item">
-      <img src="${p}" alt="사진 ${i+1}">
+      <img src="${photoSrc(p) || ''}" alt="사진 ${i+1}">
       <button class="remove" data-idx="${i}" type="button">×</button>
     </div>
   `).join('');
@@ -1601,6 +1716,10 @@ function closeLightbox() {
   document.getElementById('lightboxImg').src = '';
 }
 window.openLightbox = openLightbox;
+window.openEntryPhoto = (entryId, idx) => {
+  const e = state.entries.find(x => x.id === entryId); if (!e) return;
+  const src = photoSrc((e.photos || [])[idx]); if (src) openLightbox(src);
+};
 document.getElementById('lightboxClose').addEventListener('click', closeLightbox);
 document.getElementById('lightbox').addEventListener('click', (e) => {
   if (e.target === e.currentTarget) closeLightbox();
@@ -4550,6 +4669,23 @@ window.mergeKidsPayload = function(base, incoming) {
       if (x.id) { if (!ids.has(x.id)) { result.push(x); restored++; } }
       else { const k = JSON.stringify(x); if (!seenNoId.has(k)) { result.push(x); restored++; } }
     });
+    // 일기 사진: 같은 id 일기라도 사진은 합집합 (로컬에만 있는 사진 보존). base64 원본이 참조로 대체될 땐 저장소에 옮겨 둠
+    if (key === 'entries') {
+      const locById = new Map(loc.filter(x => x && x.id).map(x => [x.id, x]));
+      result.forEach((x, i) => {
+        const l = x && x.id && locById.get(x.id); if (!l || l === x) return;
+        const lp = Array.isArray(l.photos) ? l.photos.filter(Boolean) : []; if (!lp.length) return;
+        const ip = Array.isArray(x.photos) ? x.photos.filter(Boolean) : [];
+        const have = new Set(ip.map(normPhotoKey));
+        const add = [];
+        lp.forEach(p => {
+          const k = normPhotoKey(p);
+          if (have.has(k)) { if (isPhotoData(p)) { try { const st = loadPhotoStore(); if (!st[k.slice(3)]) st[k.slice(3)] = p; } catch (_) {} } return; }
+          have.add(k); add.push(p);
+        });
+        if (add.length) { result[i] = { ...x, photos: [...ip, ...add] }; restored += add.length; }
+      });
+    }
     out[key] = result;
   });
   // 체크리스트: { kidId: { done:{}, custom:[] } } — 완료표시·커스텀 항목 모두 합집합
@@ -4576,7 +4712,9 @@ window.exportKidsBackup = function() {
     save(); // localStorage를 최신으로
     const raw = localStorage.getItem(STORAGE_KEY);
     if (!raw) return toast('저장된 기록이 없어요');
-    const blob = new Blob([raw], { type: 'application/json' });
+    // 백업엔 사진 원본도 같이 (사진 저장소 포함)
+    const payload = JSON.parse(raw); payload.photoStore = loadPhotoStore();
+    const blob = new Blob([JSON.stringify(payload)], { type: 'application/json' });
     const a = document.createElement('a');
     a.href = URL.createObjectURL(blob);
     a.download = `자녀기록_백업_${isoDate(new Date())}.json`;
@@ -4598,8 +4736,8 @@ function renderKidsBackupInfo() {
 function kidsDataBytes() {
   let raw = ''; try { raw = localStorage.getItem('lifeos-kids-v1') || ''; } catch (_) {}
   let bytes = 0; try { bytes = new Blob([raw]).size; } catch (_) { bytes = raw.length; }
-  let photoBytes = 0, photoN = 0;
-  (state.entries || []).forEach(e => (e.photos || []).forEach(p => { photoN++; photoBytes += (p || '').length; }));
+  let photoBytes = 0, photoN = 0;   // 아직 본문에 남아있는(분리 안 된) 사진
+  (state.entries || []).forEach(e => (e.photos || []).forEach(p => { if (isPhotoData(p)) { photoN++; photoBytes += p.length; } }));
   return { bytes, photoBytes, photoN };
 }
 function renderKidsSyncInfo() {
@@ -4617,12 +4755,17 @@ function renderKidsSyncInfo() {
     const t = new Date(last.at); const ts = `${t.getMonth()+1}/${t.getDate()} ${String(t.getHours()).padStart(2,'0')}:${String(t.getMinutes()).padStart(2,'0')}`;
     lastLine = last.ok ? `✅ 마지막 업로드 성공 ${ts}` : `❌ 마지막 업로드 <b style="color:#B91C1C;">실패</b> ${ts}${last.err ? ` (${escapeHtml(String(last.err)).slice(0, 80)})` : ''}`;
   }
+  const ps = photoStoreStats();
+  let photoLine = `일기 사진(별도 저장): ${ps.n}장 · ${fmtB(ps.bytes)}`;
+  if (ps.pending) photoLine += ` · <span style="color:#B45309;">클라우드 업로드 대기 ${ps.pending}장</span>`;
+  if (ps.failed) photoLine += ` · <span style="color:#B91C1C;">업로드 실패 ${ps.failed}장</span>`;
+  if (ps.missing) photoLine += ` · <span style="color:#B45309;">다른 기기 사진 받는 중 ${ps.missing}장</span>`;
   el.innerHTML = `
     <div>이 기기: <b>${escapeHtml(dev)}</b>${configured ? '' : ' · <span style="color:#B91C1C;">동기화 설정 안 됨</span>'}</div>
-    <div>데이터 크기: <b style="color:${over ? '#B91C1C' : 'inherit'};">${fmtB(bytes)}</b> / 한도 1MB (${pct}%)${over ? ' · <b style="color:#B91C1C;">한도 초과 → 업로드 전부 실패 중</b>' : ''}</div>
-    <div>그중 일기 사진: ${photoN}장 · ${fmtB(photoBytes)}</div>
+    <div>기록 데이터: <b style="color:${over ? '#B91C1C' : 'inherit'};">${fmtB(bytes)}</b> / 한도 1MB (${pct}%)${over ? ' · <b style="color:#B91C1C;">한도 초과 → 업로드 실패 중</b>' : ''}</div>
+    ${photoN ? `<div style="color:#B91C1C;">본문에 아직 남은 사진: ${photoN}장 · ${fmtB(photoBytes)} (저장 공간 부족으로 분리 못 함)</div>` : ''}
+    <div>${photoLine}</div>
     <div>${lastLine}</div>
-    ${over ? '<div style="margin-top:6px;color:#B91C1C;">사진이 동기화 한도를 넘겨서 수유·기저귀 기록까지 다른 기기로 안 넘어가요. 사진을 동기화에서 분리하는 수정이 필요해요.</div>' : ''}
   `;
 }
 document.getElementById('kidsBackupInput').addEventListener('change', (e) => {
@@ -4634,6 +4777,13 @@ document.getElementById('kidsBackupInput').addEventListener('change', (e) => {
       const imported = JSON.parse(ev.target.result);
       if (!imported || typeof imported !== 'object') throw new Error('형식 아님');
       let local = null; try { local = JSON.parse(localStorage.getItem(STORAGE_KEY) || 'null'); } catch(_) {}
+      // 백업 속 사진 저장소 → 로컬 저장소에 합치기 (본문엔 안 섞이게 분리)
+      if (imported && imported.photoStore && typeof imported.photoStore === 'object') {
+        const st = loadPhotoStore(); let n = 0;
+        Object.entries(imported.photoStore).forEach(([id, d]) => { if (typeof d === 'string' && d.startsWith('data:') && !st[id]) { st[id] = d; n++; } });
+        if (n) savePhotoStore();
+        delete imported.photoStore;
+      }
       const { data, restored } = window.mergeKidsPayload(local, imported);
       localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
       load(); renderAll(); save();
@@ -4684,7 +4834,8 @@ window.addEventListener('kids-sync-result', renderKidsSyncInfo);
             };
             LifeOSSync.save(MODULE_KEY, data)
               .then(ok => record(!!ok, ok ? null : (bytes > 1048576 ? '1MB 한도 초과' : '업로드 실패')))
-              .catch(e => { console.warn('sync 실패:', e); record(false, e && e.message); });
+              .catch(e => { console.warn('sync 실패:', e); record(false, e && e.message); })
+              .finally(() => { if (typeof syncPhotosUp === 'function') syncPhotosUp(); });   // 사진은 개별 문서로 따로 업로드
           } catch(e) {}
         }
       }
@@ -4724,6 +4875,8 @@ window.addEventListener('kids-sync-result', renderKidsSyncInfo);
         }
       }
     } catch(e) { console.warn('[Sync] 다운로드 실패:', e); }
+    if (typeof syncPhotosUp === 'function') syncPhotosUp();   // 밀린 사진 업로드
+    if (typeof renderKidsSyncInfo === 'function') renderKidsSyncInfo();
 
     // 실시간 구독: 다른 기기에서 변경되면 자동 반영
     const myDevice = LifeOSSync.getDeviceLabel();

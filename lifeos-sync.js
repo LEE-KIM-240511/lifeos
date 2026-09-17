@@ -132,6 +132,37 @@
     }
   }
 
+  // 모듈 문서(1MB 한도)와 별도로 큰 항목(예: 일기 사진)을 개별 문서로 저장/읽기
+  // families/{familyId}/{collectionName}/{docId}
+  async function saveDoc(collectionName, docId, data) {
+    if (!initialized) {
+      const r = await init();
+      if (!r.success) return false;
+    }
+    try {
+      await db.collection('families').doc(familyId).collection(collectionName).doc(docId)
+        .set({ ...data, updatedAt: firebase.firestore.FieldValue.serverTimestamp(), updatedBy: getDeviceLabel() });
+      return true;
+    } catch(e) {
+      console.error('[LifeOSSync] saveDoc 실패:', collectionName, docId, e);
+      return false;
+    }
+  }
+
+  async function loadDoc(collectionName, docId) {
+    if (!initialized) {
+      const r = await init();
+      if (!r.success) return null;
+    }
+    try {
+      const doc = await db.collection('families').doc(familyId).collection(collectionName).doc(docId).get();
+      return doc.exists ? doc.data() : null;
+    } catch(e) {
+      console.error('[LifeOSSync] loadDoc 실패:', collectionName, docId, e);
+      return null;
+    }
+  }
+
   function onChange(moduleKey, callback) {
     if (!initialized) {
       console.warn('[LifeOSSync] 초기화 안 됨. onChange 무시');
@@ -257,7 +288,7 @@
   window.LifeOSSync = {
     isConfigured, getConfig, saveConfig, clearConfig,
     getFamilyId, saveFamilyId, getDeviceLabel, setDeviceLabel,
-    init, load, save, onChange,
+    init, load, save, onChange, saveDoc, loadDoc,
     uploadAllLocalData, downloadAllToLocal,
     getSyncLog,
   };
