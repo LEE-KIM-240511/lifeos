@@ -4613,6 +4613,69 @@ function summarizeKidsData(data) {
   const milestones = data.milestones || [];
   if (milestones.length > 0) result.milestoneCount = milestones.length;
 
+  // 신생아 케어 (수유·기저귀·수면·유축·체온) — 오늘 + 최근 7일, 아이별
+  try {
+    const todayIso = localDate(new Date());
+    const weekAgoIso = localDate(new Date(Date.now() - 6*86400000));
+    const fmtHM = (iso) => { const d = new Date(iso); return isNaN(d) ? '' : `${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`; };
+    const agoStr = (iso) => { const d = new Date(iso); if (isNaN(d)) return ''; const m = Math.max(0, Math.round((Date.now() - d) / 60000)); return m < 60 ? `${m}분 전` : `${Math.floor(m/60)}시간 ${m%60}분 전`; };
+    const FEED_LABEL = { breast:'모유(직수)', pumpedmilk:'유축수유', formula:'분유', mixed:'혼합', solid:'이유식' };
+    const feedStats = (list) => {
+      const cnt = {}; let pumpedMl = 0, formulaMl = 0, otherMl = 0;
+      list.forEach(f => {
+        const t = f.type || 'breast'; cnt[t] = (cnt[t] || 0) + 1;
+        if (t === 'mixed' && Array.isArray(f.mix)) { pumpedMl += Number(f.pumpedAmount) || 0; formulaMl += Number(f.formulaAmount) || 0; }
+        else if (t === 'pumpedmilk') pumpedMl += Number(f.amount) || 0;
+        else if (t === 'formula') formulaMl += Number(f.amount) || 0;
+        else if (t !== 'breast') otherMl += Number(f.amount) || 0;
+      });
+      const byType = Object.entries(cnt).map(([t, n]) => `${FEED_LABEL[t] || t} ${n}회`).join(', ');
+      return { count: list.length, byType, pumpedMl, formulaMl, otherMl, totalMl: pumpedMl + formulaMl + otherMl };
+    };
+    const sleepMs = (list) => list.reduce((s, x) => { const a = new Date(x.startTime), b = x.endTime ? new Date(x.endTime) : null; return (a && b && !isNaN(a) && !isNaN(b)) ? s + (b - a) : s; }, 0);
+    const fmtDur = (ms) => { const m = Math.round(ms / 60000); return m >= 60 ? `${Math.floor(m/60)}시간 ${m%60}분` : `${m}분`; };
+    result.kids.forEach((info, idx) => {
+      const k = kids[idx]; if (!k || !k.id) return;
+      const inDay = (s, day) => (s || '').slice(0, 10) === day;
+      const inWeek = (s) => { const d = (s || '').slice(0, 10); return d >= weekAgoIso && d <= todayIso; };
+      const feeds = (data.feedings || []).filter(f => f.kidId === k.id);
+      const diapers = (data.diapers || []).filter(d => d.kidId === k.id);
+      const sleeps = (data.sleeps || []).filter(s => s.kidId === k.id);
+      const pumps = (data.pumpings || []).filter(p => p.kidId === k.id);
+      const temps = (data.temperatures || []).filter(t => t.kidId === k.id);
+      if (!feeds.length && !diapers.length && !sleeps.length && !pumps.length) return;
+      const care = {};
+      const tf = feeds.filter(f => inDay(f.datetime, todayIso)), wf = feeds.filter(f => inWeek(f.datetime));
+      care.todayFeed = feedStats(tf); care.weekFeed = feedStats(wf);
+      const lastFeed = feeds.filter(f => f.datetime).sort((a, b) => b.datetime.localeCompare(a.datetime))[0];
+      if (lastFeed) care.lastFeed = { time: fmtHM(lastFeed.datetime), ago: agoStr(lastFeed.datetime), type: FEED_LABEL[lastFeed.type] || '수유', date: lastFeed.datetime.slice(0, 10) };
+      const td = diapers.filter(d => inDay(d.datetime, todayIso)), wd = diapers.filter(d => inWeek(d.datetime));
+      const dcount = (l) => ({ pee: l.filter(d => d.type === 'pee' || d.type === 'both').length, poo: l.filter(d => d.type === 'poo' || d.type === 'both').length, total: l.length });
+      care.todayDiaper = dcount(td); care.weekDiaper = dcount(wd);
+      const lastDiaper = diapers.filter(d => d.datetime).sort((a, b) => b.datetime.localeCompare(a.datetime))[0];
+      if (lastDiaper) care.lastDiaper = { time: fmtHM(lastDiaper.datetime), ago: agoStr(lastDiaper.datetime), type: lastDiaper.type === 'poo' ? '대변' : (lastDiaper.type === 'both' ? '소변+대변' : '소변') };
+      const ts = sleeps.filter(s => inDay(s.startTime, todayIso)), ws = sleeps.filter(s => inWeek(s.startTime));
+      care.todaySleep = { count: ts.length, dur: fmtDur(sleepMs(ts)) }; care.weekSleep = { count: ws.length, dur: fmtDur(sleepMs(ws)), perDay: fmtDur(sleepMs(ws) / 7) };
+      const openSleep = sleeps.find(s => s.startTime && !s.endTime);
+      if (openSleep) care.sleepingSince = fmtHM(openSleep.startTime);
+      const tp = pumps.filter(p => inDay(p.datetime, todayIso)), wp = pumps.filter(p => inWeek(p.datetime));
+      const pml = (l) => l.reduce((s, p) => s + (Number(p.amount) || 0), 0);
+      care.todayPump = { count: tp.length, ml: pml(tp) }; care.weekPump = { count: wp.length, ml: pml(wp) };
+      const tt = temps.filter(t => inDay(t.datetime, todayIso));
+      if (tt.length) { const mx = Math.max(...tt.map(t => Number(t.temp) || 0)); care.todayTemp = { count: tt.length, max: mx, fever: mx >= 37.5 }; }
+      info.care = care;
+      // 최근 몸무게/키
+      const g = (data.growth || []).filter(x => x.kidId === k.id && x.date).sort((a, b) => b.date.localeCompare(a.date));
+      if (g.length) {
+        const latest = g[0]; const prevW = g.slice(1).find(x => x.weight);
+        info.growth = { date: latest.date, weight: latest.weight || null, height: latest.height || null, weightChange: (latest.weight && prevW) ? +(latest.weight - prevW.weight).toFixed(2) : null, prevDate: prevW ? prevW.date : null };
+      }
+      // 최근 일기 3개 (제목 + 내용 앞 60자)
+      const ent = (data.entries || []).filter(e => e.kidId === k.id && e.date).sort((a, b) => b.date.localeCompare(a.date)).slice(0, 3);
+      if (ent.length) info.recentDiary = ent.map(e => ({ date: e.date, title: e.title || '', text: (e.text || '').replace(/\s+/g, ' ').slice(0, 60), photos: (e.photos || []).length }));
+    });
+  } catch (e) {}
+
   return result;
 }
 
@@ -4724,7 +4787,8 @@ function summarizeMaintenance(data) {
   if (!data) return null;
   const items = data.items || [];
   const repairs = data.repairs || [];
-  if (items.length === 0 && repairs.length === 0) return null;
+  const stocks = data.stocks || [];
+  if (items.length === 0 && repairs.length === 0 && stocks.length === 0) return null;
 
   const today = new Date();
   today.setHours(0, 0, 0, 0);
@@ -4750,6 +4814,23 @@ function summarizeMaintenance(data) {
   const recentRepairs = repairs.filter(r => r.date && new Date(r.date) >= oneYearAgo);
   const yearCost = recentRepairs.reduce((s, r) => s + (parseInt(r.cost) || 0), 0);
 
+  // 📦 재고: 유통기한 지남 / 30일 내 임박 / 수량 0
+  const stockName = (s) => `${s.name || ''}${s.brand ? `(${s.brand})` : ''}`;
+  const expired = [], expiring = [], empty = [];
+  stocks.forEach(s => {
+    if (!s) return;
+    const qty = Number(s.quantity);
+    if (!isNaN(qty) && qty <= 0) empty.push(stockName(s));
+    if (s.expiryDate) {
+      const exp = new Date(s.expiryDate); if (isNaN(exp.getTime())) return;
+      exp.setHours(0, 0, 0, 0);
+      const days = Math.ceil((exp - today) / 86400000);
+      if (days < 0) expired.push({ name: stockName(s), days: -days });
+      else if (days <= 30) expiring.push({ name: stockName(s), days });
+    }
+  });
+  expired.sort((a, b) => b.days - a.days); expiring.sort((a, b) => a.days - b.days);
+
   return {
     totalItems: items.length,
     overdue: overdue.slice(0, 5),
@@ -4759,6 +4840,7 @@ function summarizeMaintenance(data) {
     recentRepairs: recentRepairs.slice(-3).reverse().map(r => ({
       name: r.name, date: r.date, cost: parseInt(r.cost) || 0,
     })),
+    stocks: stocks.length ? { total: stocks.length, expired: expired.slice(0, 8), expiring: expiring.slice(0, 8), empty: empty.slice(0, 8) } : null,
   };
 }
 
@@ -4788,6 +4870,32 @@ ${todayStr}, ${timeStr}
         prompt += `- ${k.name} 출산 예정일: ${k.dueDate} (D-${k.daysToDue}, 약 ${k.weeksAlong}주차, ${k.trimester})\n`;
       } else if (k.ageStr) {
         prompt += `- ${k.name}: 생후 ${k.ageStr}\n`;
+      }
+      if (k.growth) {
+        prompt += `  · 최근 체중/키 (${k.growth.date}): ${k.growth.weight ? k.growth.weight + 'kg' : ''}${k.growth.weight && k.growth.height ? ' / ' : ''}${k.growth.height ? k.growth.height + 'cm' : ''}`;
+        if (k.growth.weightChange != null) prompt += ` (${k.growth.prevDate} 대비 ${k.growth.weightChange > 0 ? '+' : ''}${k.growth.weightChange}kg)`;
+        prompt += `\n`;
+      }
+      const c = k.care;
+      if (c) {
+        prompt += `  [${k.name} 신생아 케어 — 오늘]\n`;
+        const tf = c.todayFeed;
+        prompt += `  · 수유 ${tf.count}회${tf.byType ? ` (${tf.byType})` : ''}${tf.totalMl ? ` · 유축수유 ${tf.pumpedMl}ml, 분유 ${tf.formulaMl}ml${tf.otherMl ? `, 기타 ${tf.otherMl}ml` : ''} = 총 ${tf.totalMl}ml (직수는 ml 없음)` : ''}\n`;
+        if (c.lastFeed) prompt += `  · 마지막 수유: ${c.lastFeed.date === new Date().toISOString().slice(0,10) ? '' : c.lastFeed.date + ' '}${c.lastFeed.time} ${c.lastFeed.type} (${c.lastFeed.ago})\n`;
+        prompt += `  · 기저귀 ${c.todayDiaper.total}회 (소변 ${c.todayDiaper.pee}, 대변 ${c.todayDiaper.poo})${c.lastDiaper ? ` · 마지막 ${c.lastDiaper.time} ${c.lastDiaper.type} (${c.lastDiaper.ago})` : ''}\n`;
+        prompt += `  · 수면 ${c.todaySleep.count}회, 총 ${c.todaySleep.dur}${c.sleepingSince ? ` · 지금 ${c.sleepingSince}부터 자는 중` : ''}\n`;
+        if (c.todayPump.count) prompt += `  · 엄마 유축 ${c.todayPump.count}회, ${c.todayPump.ml}ml\n`;
+        if (c.todayTemp) prompt += `  · 체온 ${c.todayTemp.count}회 측정, 최고 ${c.todayTemp.max}°C${c.todayTemp.fever ? ' ⚠️ 발열' : ''}\n`;
+        const wf = c.weekFeed;
+        prompt += `  [${k.name} 최근 7일 합계]\n`;
+        prompt += `  · 수유 ${wf.count}회 (하루 평균 ${(wf.count/7).toFixed(1)}회)${wf.byType ? ` — ${wf.byType}` : ''}${wf.totalMl ? ` · 유축수유 ${wf.pumpedMl}ml, 분유 ${wf.formulaMl}ml = 총 ${wf.totalMl}ml (하루 평균 ${Math.round(wf.totalMl/7)}ml)` : ''}\n`;
+        prompt += `  · 기저귀 ${c.weekDiaper.total}회 (소변 ${c.weekDiaper.pee}, 대변 ${c.weekDiaper.poo}) · 수면 ${c.weekSleep.count}회, 총 ${c.weekSleep.dur} (하루 평균 ${c.weekSleep.perDay})`;
+        if (c.weekPump.count) prompt += ` · 엄마 유축 ${c.weekPump.count}회 ${c.weekPump.ml}ml`;
+        prompt += `\n`;
+      }
+      if (k.recentDiary && k.recentDiary.length) {
+        prompt += `  [${k.name} 최근 일기]\n`;
+        k.recentDiary.forEach(e => { prompt += `  · ${e.date}${e.title ? ' ' + e.title : ''}${e.text ? ': ' + e.text : ''}${e.photos ? ` (사진 ${e.photos}장)` : ''}\n`; });
       }
     });
     if (context.kids.shopping) {
@@ -4946,6 +5054,14 @@ ${todayStr}, ${timeStr}
     }
     if (m.recentRepairs.length > 0) {
       prompt += `- 최근 수리: ${m.recentRepairs.map(r => `${r.date} ${r.name}(${(r.cost/10000).toFixed(0)}만원)`).join(', ')}\n`;
+    }
+    if (m.stocks) {
+      const s = m.stocks;
+      prompt += `- 📦 재고 ${s.total}개 등록\n`;
+      if (s.expired.length) prompt += `    · ⚠️ 유통기한 지남: ${s.expired.map(x => `${x.name}(${x.days}일 지남)`).join(', ')}\n`;
+      if (s.expiring.length) prompt += `    · ⏰ 30일 내 유통기한: ${s.expiring.map(x => `${x.name}(${x.days}일 남음)`).join(', ')}\n`;
+      if (s.empty.length) prompt += `    · 🈳 수량 0 (다 씀): ${s.empty.join(', ')}\n`;
+      if (!s.expired.length && !s.expiring.length && !s.empty.length) prompt += `    · 유통기한 임박/만료·수량 0인 재고 없음\n`;
     }
     prompt += '\n';
   }
