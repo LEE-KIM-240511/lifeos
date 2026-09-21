@@ -848,6 +848,14 @@ header{display:flex;align-items:center;justify-content:space-between;margin-bott
       <button type="button" data-ft="mixed">🍼🤱 혼합</button>
       <button type="button" data-ft="solid">🥄 이유식</button>
     </div>
+    <div class="bt-block" id="feedMixBlock" style="display:none;margin-top:8px;">
+      <div class="bt-block-label">혼합 구성 (여러 개 선택)</div>
+      <div class="bt-seg" id="feedMixSeg">
+        <button type="button" data-mix="breast">🤱 모유(직수)</button>
+        <button type="button" data-mix="pumpedmilk">🥛 유축수유</button>
+        <button type="button" data-mix="formula">🍼 분유</button>
+      </div>
+    </div>
 
     <div class="bt-date" id="feedDateLabel"></div>
     <div class="bt-time-row">
@@ -884,9 +892,14 @@ header{display:flex;align-items:center;justify-content:space-between;margin-bott
     </div>
 
     <div class="bt-block" id="feedAmtBlock">
-      <div class="bt-block-label">먹은 양</div>
+      <div class="bt-block-label" id="feedAmtLabel">먹은 양</div>
       <div class="bt-big-num"><span id="feedAmtBig">0</span> <small>ml</small></div>
       <input type="range" class="bt-range" id="feedAmtRange" min="0" max="240" step="5" value="0">
+    </div>
+    <div class="bt-block" id="feedAmt2Block" style="display:none;">
+      <div class="bt-block-label">🍼 분유 양</div>
+      <div class="bt-big-num"><span id="feedAmt2Big">0</span> <small>ml</small></div>
+      <input type="range" class="bt-range" id="feedAmt2Range" min="0" max="240" step="5" value="0">
     </div>
 
     <div class="bt-block">
@@ -2783,7 +2796,11 @@ function renderCareSummary() {
   // 종류별 횟수/양 (모유=직수, 유축=유축수유(젖병), 분유)
   const fc = { breast:0, pumpedmilk:0, formula:0, mixed:0, solid:0 };
   const fm = { pumpedmilk:0, formula:0 };
-  feedings.forEach(f => { const t = f.type || 'breast'; if (t in fc) fc[t]++; if (t in fm) fm[t] += Number(f.amount) || 0; });
+  feedings.forEach(f => {
+    const t = f.type || 'breast'; if (t in fc) fc[t]++;
+    if (t === 'mixed' && Array.isArray(f.mix)) { fm.pumpedmilk += Number(f.pumpedAmount) || 0; fm.formula += Number(f.formulaAmount) || 0; }
+    else if (t in fm) fm[t] += Number(f.amount) || 0;
+  });
   // 한 줄 요약: 종류별 횟수만 (ml·마지막 시각은 마지막 수유 카드/패턴 통계에서 봄)
   const feedDetail = [
     fc.breast ? `모유 ${fc.breast}` : '', fc.pumpedmilk ? `유축 ${fc.pumpedmilk}` : '', fc.formula ? `분유 ${fc.formula}` : '',
@@ -2864,9 +2881,12 @@ function renderCareTimeline() {
     else if (f.type === 'mixed') title = '🍼🤱 혼합 수유';
     else if (f.type === 'solid') title = '🥄 이유식';
     let desc = [];
-    if (f.amount) desc.push(`${f.amount}mL`);
+    if (f.type === 'mixed') desc.push(...feedMixDesc(f));
+    else {
+      if (f.amount) desc.push(`${f.amount}mL`);
+      const sl = sideLabel(f.side, f.sideOrder); if (sl) desc.push(sl);
+    }
     if (f.durationMin) desc.push(`${f.durationMin}분`);
-    { const sl = sideLabel(f.side, f.sideOrder); if (sl) desc.push(sl); }
     if (f.memo) desc.push(f.memo);
     events.push({ dt, time: fmtTime(dt), icon: '🍼', title, desc: desc.join(' · '), kind: 'feeding', id: f.id });
   });
@@ -3143,14 +3163,22 @@ function openFeeding(id) {
   if (ex) dt = parseDt(ex.datetime);
   else if (state.careDate) { dt = new Date(state.careDate); const n = new Date(); dt.setHours(n.getHours(), n.getMinutes(), 0, 0); }
   else dt = new Date();
+  // 혼합: 구성(mix) + 유축/분유 각각 양. 옛 혼합 기록(구성 없음)은 방향 있으면 직수, 양 있으면 분유로 해석
+  let mix = Array.isArray(ex?.mix) ? ex.mix.slice() : [];
+  if (ex?.type === 'mixed' && !mix.length) { if (ex.side) mix.push('breast'); if (Number(ex.amount) > 0) mix.push('formula'); if (!mix.length) mix = ['breast', 'formula']; }
+  if (!mix.length) mix = ['breast', 'formula'];
+  const oldMixedAmt = (ex?.type === 'mixed' && !Array.isArray(ex?.mix)) ? (Number(ex.amount) || 0) : 0;
   feedSheetState = {
     editId: ex ? ex.id : null,
     base: new Date(dt.getTime()),
     start: new Date(dt.getTime()),
     type: ex?.type || 'breast',
+    mix,
     side: ex?.side || '',
     sideOrder: ex?.sideOrder || '',
     amount: Number(ex?.amount) || 0,
+    pumpedAmount: Number(ex?.pumpedAmount) || 0,
+    formulaAmount: Number(ex?.formulaAmount) || oldMixedAmt,
     durMin: Number(ex?.durationMin) || 0,
     tags: Array.isArray(ex?.tags) ? ex.tags.slice() : [],
   };
@@ -3174,16 +3202,37 @@ function refreshFeedSheet() {
   if (s.durMin > 0) { const end = new Date(s.start.getTime() + s.durMin*60000); document.getElementById('feedTimeEnd').textContent = '~ ' + fmtTime(end); }
   else document.getElementById('feedTimeEnd').textContent = '';
   document.getElementById('feedDurLabel').textContent = s.durMin > 0 ? (s.durMin >= 60 ? `${Math.floor(s.durMin/60)}시간 ${s.durMin%60}분` : `${s.durMin}분`) : '0분';
-  document.getElementById('feedAmtBig').textContent = s.amount;
-  document.getElementById('feedAmtRange').value = s.amount;
+  const isMixed = s.type === 'mixed';
+  const mixHas = (t) => isMixed && s.mix.includes(t);
+  document.getElementById('feedMixBlock').style.display = isMixed ? '' : 'none';
+  document.querySelectorAll('#feedMixSeg button').forEach(b => b.classList.toggle('on', s.mix.includes(b.dataset.mix)));
+  // 양: 혼합이면 1번 칸 = 유축수유 양, 2번 칸 = 분유 양 / 단일 종류면 1번 칸 = 먹은 양
+  const amt1 = mixHas('pumpedmilk') ? s.pumpedAmount : s.amount;
+  document.getElementById('feedAmtLabel').textContent = isMixed ? '🥛 유축수유 양' : '먹은 양';
+  document.getElementById('feedAmtBig').textContent = amt1;
+  document.getElementById('feedAmtRange').value = amt1;
+  document.getElementById('feedAmt2Big').textContent = s.formulaAmount;
+  document.getElementById('feedAmt2Range').value = s.formulaAmount;
   document.querySelectorAll('#feedSideSeg button').forEach(b => b.classList.toggle('on', b.dataset.side === s.side));
-  const isBreast = s.type === 'breast' || s.type === 'mixed';
+  const isBreast = s.type === 'breast' || mixHas('breast');
   document.getElementById('feedSideBlock').style.display = isBreast ? '' : 'none';
   document.querySelectorAll('#feedOrderSeg button').forEach(b => b.classList.toggle('on', b.dataset.order === s.sideOrder));
   document.getElementById('feedOrderSeg').style.display = (isBreast && s.side === 'both') ? '' : 'none';
-  const showAmt = s.type === 'formula' || s.type === 'pumpedmilk' || s.type === 'mixed' || s.type === 'solid';
+  const showAmt = s.type === 'formula' || s.type === 'pumpedmilk' || s.type === 'solid' || mixHas('pumpedmilk');
   document.getElementById('feedAmtBlock').style.display = showAmt ? '' : 'none';
+  document.getElementById('feedAmt2Block').style.display = mixHas('formula') ? '' : 'none';
   document.getElementById('feedDurBlock').style.display = '';   // 수유 시간(끝나는 시간)은 모든 종류에서 입력 가능
+}
+// 혼합 수유 구성/양 설명 (타임라인·패턴·통계 공용). 옛 혼합 기록(구성 없음)은 amount만 표시
+function feedMixDesc(f) {
+  if (!f || f.type !== 'mixed') return [];
+  const parts = [];
+  const mix = Array.isArray(f.mix) ? f.mix : [];
+  if (mix.includes('breast') || (!mix.length && f.side)) { const sl = sideLabel(f.side, f.sideOrder); parts.push('직수' + (sl ? ' ' + sl : '')); }
+  if (mix.includes('pumpedmilk')) parts.push('유축 ' + (Number(f.pumpedAmount) || 0) + 'ml');
+  if (mix.includes('formula')) parts.push('분유 ' + (Number(f.formulaAmount) || 0) + 'ml');
+  if (!mix.length && f.amount) parts.push(f.amount + 'ml');
+  return parts;
 }
 function renderFeedTags() {
   const wrap = document.getElementById('feedTags'); if (!wrap) return; wrap.innerHTML = '';
@@ -3201,6 +3250,13 @@ function renderFeedTags() {
 }
 // 컨트롤 바인딩
 document.querySelectorAll('#feedTypeSeg button').forEach(b => b.addEventListener('click', () => { feedSheetState.type = b.dataset.ft; refreshFeedSheet(); }));
+document.querySelectorAll('#feedMixSeg button').forEach(b => b.addEventListener('click', () => {
+  const s = feedSheetState; const t = b.dataset.mix; const i = s.mix.indexOf(t);
+  if (i >= 0) { if (s.mix.length > 1) s.mix.splice(i, 1); }   // 최소 1개는 남김
+  else s.mix.push(t);
+  refreshFeedSheet();
+}));
+document.getElementById('feedAmt2Range').addEventListener('input', (e) => { feedSheetState.formulaAmount = parseInt(e.target.value) || 0; document.getElementById('feedAmt2Big').textContent = feedSheetState.formulaAmount; });
 document.querySelectorAll('#feedSideSeg button').forEach(b => b.addEventListener('click', () => { feedSheetState.side = feedSheetState.side === b.dataset.side ? '' : b.dataset.side; refreshFeedSheet(); }));
 document.querySelectorAll('#feedOrderSeg button').forEach(b => b.addEventListener('click', () => { feedSheetState.sideOrder = feedSheetState.sideOrder === b.dataset.order ? '' : b.dataset.order; refreshFeedSheet(); }));
 document.getElementById('feedTimeRange').addEventListener('input', (e) => { const v = parseInt(e.target.value) || 0; feedSheetState.start = new Date(feedSheetState.base.getTime() + v*60000); refreshFeedSheet(); });
@@ -3212,19 +3268,30 @@ function shiftFeedBase(min) {
 }
 document.getElementById('feedMinus1h').addEventListener('click', () => shiftFeedBase(-60));
 document.getElementById('feedPlus1h').addEventListener('click', () => shiftFeedBase(60));
-document.getElementById('feedAmtRange').addEventListener('input', (e) => { feedSheetState.amount = parseInt(e.target.value) || 0; document.getElementById('feedAmtBig').textContent = feedSheetState.amount; });
+document.getElementById('feedAmtRange').addEventListener('input', (e) => {
+  const v = parseInt(e.target.value) || 0; const s = feedSheetState;
+  if (s.type === 'mixed' && s.mix.includes('pumpedmilk')) s.pumpedAmount = v; else s.amount = v;
+  document.getElementById('feedAmtBig').textContent = v;
+});
 document.querySelectorAll('#sheetFeeding .bt-stepper [data-dur]').forEach(b => b.addEventListener('click', () => { feedSheetState.durMin = Math.max(0, feedSheetState.durMin + (parseInt(b.dataset.dur)||0)); refreshFeedSheet(); }));
 document.getElementById('feedSheetSave').addEventListener('click', () => {
   const k = getKid(); const s = feedSheetState; if (!k || !s) return;
-  const isBreast = s.type === 'breast' || s.type === 'mixed';
-  const showAmt = s.type === 'formula' || s.type === 'pumpedmilk' || s.type === 'mixed' || s.type === 'solid';
+  const isMixed = s.type === 'mixed';
+  const mix = isMixed ? s.mix.slice() : null;
+  const isBreast = s.type === 'breast' || (isMixed && mix.includes('breast'));
+  const showAmt = s.type === 'formula' || s.type === 'pumpedmilk' || s.type === 'solid';
+  const pumpedAmount = (isMixed && mix.includes('pumpedmilk')) ? (s.pumpedAmount || 0) : null;
+  const formulaAmount = (isMixed && mix.includes('formula')) ? (s.formulaAmount || 0) : null;
   const data = {
     kidId: k.id,
     datetime: dtIso(s.start),
     type: s.type,
+    mix,
     side: isBreast ? (s.side || null) : null,
     sideOrder: (isBreast && s.side === 'both') ? (s.sideOrder || null) : null,
-    amount: showAmt ? (s.amount || null) : null,
+    // amount: 단일 종류는 먹은 양, 혼합은 유축+분유 합계(통계 호환)
+    amount: showAmt ? (s.amount || null) : (isMixed ? (((pumpedAmount || 0) + (formulaAmount || 0)) || null) : null),
+    pumpedAmount, formulaAmount,
     durationMin: s.durMin || null,
     tags: s.tags.slice(),
     memo: document.getElementById('feedMemoPro').value.trim() || null,
@@ -4193,9 +4260,10 @@ function renderDayPattern() {
         const emoji = f.type==='formula'?'🍼':(f.type==='pumpedmilk'?'🥛':(f.type==='solid'?'🥄':(f.type==='mixed'?'🍼':'🤱')));
         const color = f.type==='formula'?'#F5A623':(f.type==='pumpedmilk'?'#60A5FA':(f.type==='solid'?'#C9A227':'#FF8B8B'));
         const tlabel = {breast:'모유(직수)',pumpedmilk:'유축수유',formula:'분유',mixed:'혼합',solid:'이유식'}[f.type]||'수유';
-        const sideL = sideLabel(f.side, f.sideOrder);
+        const sideL = f.type === 'mixed' ? '' : sideLabel(f.side, f.sideOrder);
         const parts = [emoji+' '+tlabel+(sideL?(' '+sideL):''), fmtTime(dt)];
-        if (f.amount) parts.push(f.amount+'ml');
+        if (f.type === 'mixed') parts.push(...feedMixDesc(f));
+        else if (f.amount) parts.push(f.amount+'ml');
         if (f.durationMin) parts.push(f.durationMin+'분');
         if (f.memo) parts.push(f.memo);
         addBar(col, hourOf(dt), (Number(f.durationMin)||0)/60, color, emoji, parts.join(' · '), 'line');
@@ -4283,11 +4351,15 @@ function collectCareEvents(kidId, fromIso, toIso) {
   if (feedAnyOn()) state.feedings.filter(f => f.kidId === kidId && inRange(f.datetime) && feedFilterOn(f)).forEach(f => {
     const dt = parseDt(f.datetime); if (!dt) return;
     const tl = {breast:'모유(직수)',pumpedmilk:'유축수유',formula:'분유',mixed:'혼합',solid:'이유식'}[f.type] || '수유';
-    const side = sideLabel(f.side, f.sideOrder);
-    const parts = []; if (f.amount) parts.push(f.amount+'ml'); if (f.durationMin) parts.push(f.durationMin+'분'); if (side) parts.push(side); if (f.memo) parts.push(f.memo);
+    const side = f.type === 'mixed' ? '' : sideLabel(f.side, f.sideOrder);
+    const parts = [];
+    if (f.type === 'mixed') parts.push(...feedMixDesc(f)); else if (f.amount) parts.push(f.amount+'ml');
+    if (f.durationMin) parts.push(f.durationMin+'분'); if (side) parts.push(side); if (f.memo) parts.push(f.memo);
     const fe = f.type === 'formula' ? '🍼' : (f.type === 'pumpedmilk' ? '🥛' : (f.type === 'solid' ? '🥄' : '🤱'));
     const fc = f.type === 'formula' ? '#F5A623' : (f.type === 'pumpedmilk' ? '#60A5FA' : (f.type === 'solid' ? '#C9A227' : '#FF8B8B'));
-    ev.push({ kind:'feeding', ftype: f.type || 'breast', start:dt, end: f.durationMin ? new Date(dt.getTime()+f.durationMin*60000) : null, title:fe+' '+tl, sub:parts.join(' · '), amount:Number(f.amount)||0, color:fc, emoji:fe });
+    // 혼합: 유축/분유 양을 각각 들고 가서 통계에서 종류별로 집계 (옛 혼합 기록은 합계만 있음 → 기타)
+    const mixSplit = f.type === 'mixed' && Array.isArray(f.mix);
+    ev.push({ kind:'feeding', ftype: f.type || 'breast', start:dt, end: f.durationMin ? new Date(dt.getTime()+f.durationMin*60000) : null, title:fe+' '+tl, sub:parts.join(' · '), amount:Number(f.amount)||0, pumpedAmount: mixSplit ? (Number(f.pumpedAmount)||0) : null, formulaAmount: mixSplit ? (Number(f.formulaAmount)||0) : null, color:fc, emoji:fe });
   });
   // 수면은 자정을 넘기므로 시작 또는 종료가 기간 안이면 포함 (전날 밤잠이 오늘 새벽에 보이게)
   if (patternFilter.sleep) state.sleeps.filter(s => s.kidId === kidId && (inRange(s.startTime) || inRange(s.endTime))).forEach(s => {
@@ -4454,6 +4526,11 @@ function renderStats() {
   feeds.forEach(e => {
     const t = e.ftype || 'breast';
     if (t in cnt) cnt[t]++;
+    if (t === 'mixed' && e.pumpedAmount != null) {   // 새 혼합 기록: 유축/분유 양을 각각 집계
+      if (e.pumpedAmount > 0) { ml.pumpedmilk += e.pumpedAmount; mlN.pumpedmilk++; }
+      if (e.formulaAmount > 0) { ml.formula += e.formulaAmount; mlN.formula++; }
+      return;
+    }
     if (t in ml && e.amount > 0) { ml[t] += e.amount; mlN[t]++; }
   });
   const totalMl = ml.pumpedmilk + ml.formula + ml.mixed + ml.solid;

@@ -2149,7 +2149,9 @@ function maintNextDate(item) {
   if (!item || !item.lastDate) return null;
   const d = new Date(item.lastDate);
   if (isNaN(d.getTime())) return null;
-  d.setMonth(d.getMonth() + (item.periodMonths || 3));
+  const pm = Number(item.periodMonths) || 3;
+  if (pm < 1) d.setDate(d.getDate() + Math.round(pm * 28));   // 주 단위 주기: 0.25=1주, 0.5=2주
+  else d.setMonth(d.getMonth() + pm);
   return d;
 }
 

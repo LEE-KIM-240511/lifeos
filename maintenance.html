@@ -513,6 +513,8 @@ body {
       <div class="field">
         <label>주기</label>
         <select id="itemPeriod">
+          <option value="0.25">매주 (1주)</option>
+          <option value="0.5">2주마다</option>
           <option value="1">매월</option>
           <option value="2">2개월</option>
           <option value="3">3개월</option>
@@ -771,7 +773,9 @@ function calcNextDate(item) {
   if (!item.lastDate) return null;
   const d = new Date(item.lastDate);
   if (isNaN(d.getTime())) return null;
-  d.setMonth(d.getMonth() + (item.periodMonths || 3));
+  const pm = Number(item.periodMonths) || 3;
+  if (pm < 1) d.setDate(d.getDate() + Math.round(pm * 28));   // 주 단위 주기: 0.25=1주(7일), 0.5=2주(14일)
+  else d.setMonth(d.getMonth() + pm);
   return d;
 }
 
@@ -897,8 +901,11 @@ function renderItemCard(item) {
     dDayHtml = `<span class="ddays">${fmtDays(item.days)}</span> · `;
   }
 
-  const periodLabel = item.periodMonths === 1 ? '매월' :
-                      item.periodMonths === 12 ? '매년' :
+  const pmv = Number(item.periodMonths);
+  const periodLabel = pmv === 0.25 ? '매주' :
+                      pmv === 0.5 ? '2주마다' :
+                      pmv === 1 ? '매월' :
+                      pmv === 12 ? '매년' :
                       `${item.periodMonths}개월`;
 
   const nextStr = item.next ? fmtDate(item.next) : '미설정';
@@ -980,7 +987,7 @@ document.getElementById('btnSaveItem').addEventListener('click', () => {
   const data = {
     name,
     category: document.getElementById('itemCategory').value,
-    periodMonths: parseInt(document.getElementById('itemPeriod').value) || 3,
+    periodMonths: parseFloat(document.getElementById('itemPeriod').value) || 3,
     lastDate: document.getElementById('itemLastDate').value || null,
     nextDate: document.getElementById('itemNextDate').value || null,
     memo: document.getElementById('itemMemo').value.trim(),
