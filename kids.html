@@ -3165,8 +3165,8 @@ function openFeeding(id) {
   else dt = new Date();
   // 혼합: 구성(mix) + 유축/분유 각각 양. 옛 혼합 기록(구성 없음)은 방향 있으면 직수, 양 있으면 분유로 해석
   let mix = Array.isArray(ex?.mix) ? ex.mix.slice() : [];
-  if (ex?.type === 'mixed' && !mix.length) { if (ex.side) mix.push('breast'); if (Number(ex.amount) > 0) mix.push('formula'); if (!mix.length) mix = ['breast', 'formula']; }
-  if (!mix.length) mix = ['breast', 'formula'];
+  if (ex?.type === 'mixed' && !mix.length) { if (ex.side) mix.push('breast'); if (Number(ex.amount) > 0) mix.push('formula'); if (!mix.length) mix = ['pumpedmilk', 'formula']; }
+  if (!mix.length) mix = ['pumpedmilk', 'formula'];   // 새 혼합 기록 기본값: 유축수유 + 분유
   const oldMixedAmt = (ex?.type === 'mixed' && !Array.isArray(ex?.mix)) ? (Number(ex.amount) || 0) : 0;
   feedSheetState = {
     editId: ex ? ex.id : null,
