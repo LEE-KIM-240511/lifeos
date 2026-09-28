@@ -544,6 +544,7 @@ header{display:flex;align-items:center;justify-content:space-between;margin-bott
       </div>
     </div>
     <div id="vaccineSummary" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin-bottom:14px;"></div>
+    <div id="vaccineGuide" style="margin-bottom:14px;"></div>
     <div id="vaccineList"></div>
   </div>
 
@@ -3673,26 +3674,36 @@ const KR_VACCINE_SCHEDULE = [
   { id: 'bcg', name: 'BCG (결핵)', monthsAfterBirth: 1, info: '생후 4주 이내' },
   { id: 'hepb1', name: 'B형간염 1차', daysAfterBirth: 0, info: '생후 즉시' },
   { id: 'hepb2', name: 'B형간염 2차', monthsAfterBirth: 1, info: '생후 1개월' },
-  { id: 'hepb3', name: 'B형간염 3차', monthsAfterBirth: 6, info: '생후 6개월' },
-  { id: 'dtap1', name: 'DTaP 1차 (디프테리아/파상풍/백일해)', monthsAfterBirth: 2, info: '생후 2개월' },
+  { id: 'hepb3', name: 'B형간염 3차', monthsAfterBirth: 6, info: '생후 6개월 (6가 혼합백신을 맞으면 6가에 포함)' },
+  { id: 'dtap1', name: 'DTaP 1차 (디프테리아/파상풍/백일해)', monthsAfterBirth: 2, info: '생후 2개월 · 5가/6가 혼합백신이면 폴리오·Hib와 한 번에' },
   { id: 'dtap2', name: 'DTaP 2차', monthsAfterBirth: 4, info: '생후 4개월' },
   { id: 'dtap3', name: 'DTaP 3차', monthsAfterBirth: 6, info: '생후 6개월' },
+  { id: 'dtap4', name: 'DTaP 4차', monthsAfterBirth: 15, info: '생후 15~18개월' },
+  { id: 'dtap5', name: 'DTaP-IPV 5차 (DTaP 5차 + 폴리오 4차)', monthsAfterBirth: 48, info: '만 4~6세' },
   { id: 'ipv1', name: '폴리오 1차', monthsAfterBirth: 2, info: '생후 2개월' },
   { id: 'ipv2', name: '폴리오 2차', monthsAfterBirth: 4, info: '생후 4개월' },
   { id: 'ipv3', name: '폴리오 3차', monthsAfterBirth: 6, info: '생후 6~18개월' },
   { id: 'hib1', name: 'Hib (b형 헤모필루스 인플루엔자) 1차', monthsAfterBirth: 2, info: '생후 2개월' },
   { id: 'hib2', name: 'Hib 2차', monthsAfterBirth: 4, info: '생후 4개월' },
   { id: 'hib3', name: 'Hib 3차', monthsAfterBirth: 6, info: '생후 6개월' },
+  { id: 'hib4', name: 'Hib 4차', monthsAfterBirth: 12, info: '생후 12~15개월' },
   { id: 'pcv1', name: 'PCV (폐렴구균) 1차', monthsAfterBirth: 2, info: '생후 2개월' },
   { id: 'pcv2', name: 'PCV 2차', monthsAfterBirth: 4, info: '생후 4개월' },
   { id: 'pcv3', name: 'PCV 3차', monthsAfterBirth: 6, info: '생후 6개월' },
-  { id: 'rota1', name: '로타바이러스 1차', monthsAfterBirth: 2, info: '생후 2개월' },
-  { id: 'rota2', name: '로타바이러스 2차', monthsAfterBirth: 4, info: '생후 4개월' },
-  { id: 'mmr1', name: 'MMR (홍역/유행성이하선염/풍진) 1차', monthsAfterBirth: 12, info: '생후 12~15개월' },
-  { id: 'var', name: '수두', monthsAfterBirth: 12, info: '생후 12~15개월' },
-  { id: 'hepa1', name: 'A형간염 1차', monthsAfterBirth: 12, info: '생후 12개월' },
-  { id: 'je1', name: '일본뇌염 (불활성화 1차)', monthsAfterBirth: 12, info: '생후 12개월' },
+  { id: 'pcv4', name: 'PCV 4차', monthsAfterBirth: 12, info: '생후 12~15개월' },
+  { id: 'rota1', name: '로타바이러스 1차 (먹는 백신)', monthsAfterBirth: 2, info: '생후 2개월 · 생후 15주 전에 시작' },
+  { id: 'rota2', name: '로타바이러스 2차', monthsAfterBirth: 4, info: '생후 4개월 · 로타릭스는 여기서 끝' },
+  { id: 'rota3', name: '로타바이러스 3차 (로타텍 선택 시만)', monthsAfterBirth: 6, info: '생후 6개월 · 로타릭스를 맞았으면 필요 없음' },
   { id: 'flu', name: '인플루엔자 1차', monthsAfterBirth: 6, info: '생후 6개월 ~ 매년' },
+  { id: 'flu2', name: '인플루엔자 2차 (첫해만)', monthsAfterBirth: 7, info: '처음 맞는 해만 1차 4주 뒤 한 번 더' },
+  { id: 'mmr1', name: 'MMR (홍역/유행성이하선염/풍진) 1차', monthsAfterBirth: 12, info: '생후 12~15개월' },
+  { id: 'mmr2', name: 'MMR 2차', monthsAfterBirth: 48, info: '만 4~6세' },
+  { id: 'var', name: '수두', monthsAfterBirth: 12, info: '생후 12~15개월' },
+  { id: 'hepa1', name: 'A형간염 1차', monthsAfterBirth: 12, info: '생후 12~23개월' },
+  { id: 'hepa2', name: 'A형간염 2차', monthsAfterBirth: 18, info: '1차 6~12개월 뒤' },
+  { id: 'je1', name: '일본뇌염 1차', monthsAfterBirth: 12, info: '생후 12~23개월 · 불활성화/생백신 중 선택' },
+  { id: 'je2', name: '일본뇌염 2차 (불활성화 선택 시)', monthsAfterBirth: 13, info: '불활성화: 1차 7~30일 뒤 · 생백신이면 필요 없음' },
+  { id: 'je3', name: '일본뇌염 3차(불활성화) / 2차(생백신)', monthsAfterBirth: 24, info: '불활성화: 2차 12개월 뒤 · 생백신: 1차 12개월 뒤' },
   // 국가 영유아 건강검진 (건강검진 8차 + 구강검진 3차) — 무료, 지정 병·의원
   { id: 'checkup1', name: '영유아 건강검진 1차', daysAfterBirth: 20, info: '생후 14~35일' },
   { id: 'checkup2', name: '영유아 건강검진 2차', monthsAfterBirth: 4, info: '생후 4~6개월' },
@@ -3705,6 +3716,132 @@ const KR_VACCINE_SCHEDULE = [
   { id: 'oral1', name: '영유아 구강검진 1차', monthsAfterBirth: 18, info: '생후 18~29개월' },
   { id: 'oral2', name: '영유아 구강검진 2차', monthsAfterBirth: 42, info: '생후 42~53개월' },
   { id: 'oral3', name: '영유아 구강검진 3차', monthsAfterBirth: 54, info: '생후 54~65개월' },
+];
+
+// ===== 예방접종 알아두기: 백신별 종류 비교 · 장단점 · 접종열/이상반응 =====
+// fever: 접종열 빈도 'often'(흔함) | 'some'(가끔) | 'rare'(드묾) | 'late'(1~2주 뒤 늦게) | 'none'(검진)
+// 기준: 질병관리청 국가예방접종(표준예방접종일정표) — 병원마다 보유 백신이 달라 접종 전 확인 필요
+const VACCINE_INFO = {
+  bcg: { title:'BCG (결핵)', free:'국가 무료(피내용)', when:'생후 4주 이내 1회',
+    what:'결핵성 수막염·좁쌀결핵 같은 영아의 중증 결핵을 막아요.',
+    types:[
+      { name:'피내용 (주사)', note:'국가 무료 · 질병청 권장. 피부 안쪽에 정확한 양을 주사. 흉터가 조금 더 크게 남을 수 있음' },
+      { name:'경피용 (도장형, 9개 바늘)', note:'유료. 흉터가 덜 눈에 띄는 편이지만 들어가는 양이 일정하지 않을 수 있음. 공급이 자주 바뀌니 병원 확인' },
+    ],
+    fever:'rare', feverText:'열은 거의 없어요. 대신 2~4주 뒤 접종 부위가 빨갛게 부풀고 고름·딱지가 생겼다 2~3개월에 걸쳐 흉터로 아무는 게 정상이에요.',
+    tips:['고름은 짜거나 소독하지 말고 그대로 두기, 목욕 가능','겨드랑이 멍울이 1cm 넘게 커지거나 터지면 소아과 확인'] },
+  hepb: { title:'B형간염', free:'국가 무료', when:'0 · 1 · 6개월 (3회)',
+    what:'간암·간경화로 이어질 수 있는 B형간염을 막아요.',
+    types:[ { name:'단독 B형간염 백신', note:'제품 간 차이 거의 없음. 6가 혼합백신을 맞으면 6개월 3차는 6가에 포함돼 따로 안 맞아요' } ],
+    fever:'rare', feverText:'열은 드물어요. 접종 부위가 1~2일 아프거나 붓는 정도예요.',
+    tips:['엄마가 B형간염 보유자면 출생 직후 면역글로불린을 함께 맞고, 생후 9~15개월에 항체 검사'] },
+  combo: { title:'DTaP · 폴리오 · Hib (혼합백신)', free:'국가 무료 (단독·4가·5가·6가 모두)', when:'2 · 4 · 6개월 기초 → DTaP 15~18개월, Hib 12~15개월, 만 4~6세 추가',
+    what:'디프테리아·파상풍·백일해(DTaP), 소아마비(폴리오), 뇌수막염·폐렴을 일으키는 b형 헤모필루스(Hib)를 막아요.',
+    types:[
+      { name:'단독 접종 (DTaP + 폴리오 + Hib 따로)', note:'한 번에 주사 3대. 가장 오래 써온 방식이지만 아기가 힘들어서 요즘은 덜 선택' },
+      { name:'4가 (DTaP + 폴리오)', note:'테트락심·인판릭스-IPV 등. Hib는 따로 한 대 더' },
+      { name:'5가 (DTaP + 폴리오 + Hib)', note:'펜탁심 등. 한 대로 끝나서 많이 선택. B형간염은 6개월에 따로' },
+      { name:'6가 (5가 + B형간염)', note:'헥사심 등. 한 대로 가장 많이 막음, 6개월 B형간염 3차 포함. 결과적으로 B형간염을 한두 번 더 맞게 되지만 안전성 문제는 없음' },
+    ],
+    pick:'요즘은 주사 수를 줄이려고 5가·6가를 많이 맞혀요. 기초 3회는 같은 제품으로 맞는 게 원칙이라, 첫 접종 병원에 어떤 제품이 계속 있는지 물어보세요.',
+    fever:'often', feverText:'접종열이 흔한 편이에요. 접종 후 6~48시간 안에 미열~38℃대 열, 보챔, 접종 부위 붓기·딱딱함이 생길 수 있어요. 4·5차(15~18개월, 만 4~6세)에는 팔이나 허벅지가 넓게 붓기도 하는데 며칠이면 가라앉아요.',
+    tips:['폐렴구균과 같은 날 맞으면 열이 조금 더 잘 날 수 있음 — 그래도 동시 접종이 권장','39℃ 이상, 3시간 넘게 달래지지 않는 울음, 경련, 축 처짐 → 바로 진료'] },
+  pcv: { title:'폐렴구균 (PCV)', free:'국가 무료', when:'2 · 4 · 6개월 + 12~15개월 (4회)',
+    what:'폐렴구균이 일으키는 뇌수막염·패혈증·폐렴·중이염을 막아요.',
+    types:[
+      { name:'13가 (프리베나13)', note:'가장 오래·널리 써온 백신. 13가지 혈청형 예방' },
+      { name:'15가 (박스뉴밴스)', note:'13가에 2가지 혈청형을 더 막음. 최근 선택이 늘어남' },
+      { name:'10가 (신플로릭스)', note:'막는 혈청형 수는 적지만 일부 중이염 예방 효과를 내세움' },
+    ],
+    pick:'"가"는 막는 균 종류의 수예요. 요즘은 13가·15가를 많이 맞혀요. 4회 모두 같은 제품으로 맞는 게 원칙이에요.',
+    fever:'often', feverText:'접종열이 가끔~흔하게 있어요. 1~2일 미열, 보챔, 접종 부위 붓기·통증이 생길 수 있어요.',
+    tips:['혼합백신과 같은 날 맞으면 열 가능성이 조금 올라감'] },
+  rota: { title:'로타바이러스 (먹는 백신)', free:'국가 무료 (2024년부터)', when:'로타릭스 2 · 4개월 (2회) / 로타텍 2 · 4 · 6개월 (3회)',
+    what:'영아에게 심한 설사·구토·탈수를 일으키는 로타바이러스 장염을 막아요. 입으로 먹이는 백신이에요.',
+    types:[
+      { name:'로타릭스 (1가, 2회)', note:'횟수가 적어 4개월에 끝남. 사람 로타바이러스 1가지 균주 기반' },
+      { name:'로타텍 (5가, 3회)', note:'여러 혈청형 기반, 6개월까지 3회. 효과는 두 제품 비슷' },
+    ],
+    pick:'효과·안전성은 비슷해서 병원 보유 제품이나 횟수로 고르면 돼요. 중간에 제품을 바꾸면 3회를 맞아야 해요.',
+    fever:'rare', feverText:'열은 드물어요. 며칠 보채거나 묽은 변이 있을 수 있어요.',
+    tips:['1차는 생후 15주가 되기 전에 시작해야 함(늦으면 못 맞음)','접종 후 1주 안에 발작적으로 심하게 울고 다리를 배로 끌어당기거나, 구토·피 섞인 변(딸기잼 같은 변)이 보이면 장중첩 의심 → 즉시 병원','먹인 뒤 바로 토해도 대부분 다시 먹이지 않음(병원 판단)'] },
+  flu: { title:'인플루엔자 (독감)', free:'국가 무료 (생후 6개월~만 13세)', when:'매년 가을 · 처음 맞는 해만 4주 간격 2회',
+    what:'독감과 폐렴·열성경련 같은 합병증을 막아요. 해마다 유행 균주가 바뀌어 매년 맞아요.',
+    types:[ { name:'불활성화 주사 백신', note:'최근 절기는 3가 백신을 써요. 제조사 간 차이는 거의 없어요' } ],
+    fever:'some', feverText:'가끔 1~2일 미열, 접종 부위 통증이 있어요.',
+    tips:['10~11월에 맞으면 유행기 전에 항체가 생김','첫해에 1회만 맞았다면 다음 해엔 1회로 충분한지 병원에 확인'] },
+  mmr: { title:'MMR (홍역 · 유행성이하선염 · 풍진)', free:'국가 무료', when:'12~15개월 · 만 4~6세 (2회)',
+    what:'홍역·볼거리·풍진을 막는 생백신이에요.',
+    types:[ { name:'MMR 생백신', note:'제품 간 효과 차이 거의 없음' } ],
+    fever:'late', feverText:'접종 당일이 아니라 7~12일 뒤에 열이나 옅은 발진이 생길 수 있어요. 2~3일이면 저절로 사라지고, 옮기지 않아요.',
+    tips:['다른 생백신(수두·일본뇌염 생백신)과는 같은 날 맞거나 4주 간격을 둠'] },
+  var: { title:'수두', free:'국가 무료 (1회)', when:'12~15개월 1회',
+    what:'수두와 그 합병증(피부 감염 등)을 막는 생백신이에요.',
+    types:[ { name:'수두 생백신', note:'국산·수입 여러 제품이 국가 무료. 병원 보유 제품 확인. 추가 접종(2회)은 유료로 권하는 병원도 있음' } ],
+    fever:'some', feverText:'가끔 미열이 있어요. 드물게 1개월 안에 수포가 몇 개 생기기도 해요.',
+    tips:['접종 부위 외에 수포가 많이 생기면 소아과 확인'] },
+  hepa: { title:'A형간염', free:'국가 무료', when:'12~23개월 1차 → 6~12개월 뒤 2차',
+    what:'A형간염을 막아요. 어릴 때 걸리면 가볍지만 어른이 걸리면 심해서 미리 맞혀요.',
+    types:[ { name:'불활성화 백신', note:'제품 간 차이 거의 없고, 1·2차 다른 제품이어도 됨' } ],
+    fever:'rare', feverText:'열은 드물어요. 접종 부위 통증 정도예요.', tips:[] },
+  je: { title:'일본뇌염', free:'국가 무료 (두 종류 중 선택)', when:'12~23개월 시작',
+    what:'모기가 옮기는 일본뇌염(치명률·후유증이 큼)을 막아요.',
+    types:[
+      { name:'불활성화 백신 (5회)', note:'1·2차 7~30일 간격 → 12개월 뒤 3차 → 만 6세 → 만 12세. 오래 써온 방식' },
+      { name:'약독화 생백신 (2회)', note:'1차 후 12개월 뒤 2차로 끝. 횟수가 적어 많이 선택. 다른 생백신과는 간격 규칙 있음' },
+    ],
+    pick:'한 번 정한 종류로 끝까지 맞는 게 원칙이에요.',
+    fever:'some', feverText:'가끔 미열, 접종 부위 통증이 있어요.', tips:[] },
+  checkup: { title:'영유아 건강검진', free:'국가 무료 (지정 병·의원)', when:'생후 14일~71개월, 총 8회',
+    what:'키·몸무게·머리둘레 성장과 발달(문진표)을 확인해요. 예방접종과는 별개예요.',
+    types:[], fever:'none', feverText:'', tips:['검진 전 건강iN이나 병원에서 발달 문진표를 미리 작성','시기를 놓치면 그 차수는 무료가 안 되니 기간 안에'] },
+  oral: { title:'영유아 구강검진', free:'국가 무료 (지정 치과)', when:'18~29개월 · 42~53개월 · 54~65개월',
+    what:'충치·치아 발달을 확인하고 양치 교육을 받아요.', types:[], fever:'none', feverText:'', tips:[] },
+};
+const VACC_FEVER_BADGE = {
+  often: { t:'🌡️ 접종열 흔함', c:'#B45309', bg:'#FEF3C7' },
+  some:  { t:'🌡️ 접종열 가끔', c:'#A16207', bg:'#FEF9C3' },
+  rare:  { t:'🌡️ 접종열 드묾', c:'#15803D', bg:'#DCFCE7' },
+  late:  { t:'🌡️ 7~12일 뒤 열 가능', c:'#9A3412', bg:'#FFEDD5' },
+};
+// 접종 기록 → 알아두기 그룹 (표준 일정 id 우선, 직접 추가한 건 이름으로 추정)
+function vaccGroupOf(v) {
+  const id = (v && v.vaccineId) || '';
+  const pre = id.replace(/\d+$/, '');
+  const byId = { bcg:'bcg', hepb:'hepb', dtap:'combo', ipv:'combo', hib:'combo', pcv:'pcv', rota:'rota', flu:'flu', mmr:'mmr', var:'var', hepa:'hepa', je:'je', checkup:'checkup', oral:'oral' };
+  if (byId[pre]) return byId[pre];
+  const n = (v && v.name) || '';
+  if (/BCG|결핵/i.test(n)) return 'bcg';
+  if (/B형간염/.test(n)) return 'hepb';
+  if (/DTaP|폴리오|Hib|5가|6가|혼합/i.test(n)) return 'combo';
+  if (/폐렴구균|PCV/i.test(n)) return 'pcv';
+  if (/로타/.test(n)) return 'rota';
+  if (/인플루엔자|독감/.test(n)) return 'flu';
+  if (/MMR|홍역/i.test(n)) return 'mmr';
+  if (/수두/.test(n)) return 'var';
+  if (/A형간염/.test(n)) return 'hepa';
+  if (/일본뇌염/.test(n)) return 'je';
+  if (/구강/.test(n)) return 'oral';
+  if (/검진/.test(n)) return 'checkup';
+  return null;
+}
+function vaccInfoHtml(key) {
+  const x = VACCINE_INFO[key]; if (!x) return '';
+  const b = VACC_FEVER_BADGE[x.fever];
+  return `<div style="font-size:12px;line-height:1.6;color:var(--text-secondary);">
+    <div style="color:var(--text);">${escapeHtml(x.what)}</div>
+    <div style="margin-top:4px;">📅 ${escapeHtml(x.when)} · 💳 ${escapeHtml(x.free)}</div>
+    ${x.types.length ? `<div style="margin-top:6px;font-weight:700;color:var(--text);">💉 종류 비교</div><ul style="margin:2px 0 0;padding-left:18px;">${x.types.map(t => `<li><b>${escapeHtml(t.name)}</b> — ${escapeHtml(t.note)}</li>`).join('')}</ul>` : ''}
+    ${x.pick ? `<div style="margin-top:4px;background:#F8FAFC;border-radius:8px;padding:6px 8px;">👉 ${escapeHtml(x.pick)}</div>` : ''}
+    ${x.feverText ? `<div style="margin-top:6px;">${b ? `<span style="font-size:11px;font-weight:700;color:${b.c};background:${b.bg};padding:1px 7px;border-radius:999px;">${b.t}</span> ` : ''}${escapeHtml(x.feverText)}</div>` : ''}
+    ${x.tips && x.tips.length ? `<ul style="margin:4px 0 0;padding-left:18px;">${x.tips.map(t => `<li>${escapeHtml(t)}</li>`).join('')}</ul>` : ''}
+  </div>`;
+}
+const VACC_COMMON_TIPS = [
+  { t:'✅ 접종 전', items:['아기 컨디션 좋은 날 오전에(오후에 열 나도 병원 갈 시간 있게)','집에서 체온 재고, 예진표는 전날 미리','예방접종도우미 앱에서 다음 차수·병원 보유 백신 확인'] },
+  { t:'🌡️ 접종열 대처', items:['대부분 접종 후 48시간 안에 38℃ 안팎으로 났다가 1~2일이면 내려감','옷은 가볍게, 수유를 자주 — 해열제를 미리 먹이지는 않기(열 나거나 많이 보챌 때만)','해열제는 체중 기준 용량으로, 3개월 미만은 먼저 소아과에 전화로 상의','접종 부위가 붓고 아프면 차가운 수건 찜질'] },
+  { t:'🚨 바로 병원', items:['39℃ 이상이거나 열이 48시간 넘게 계속','3시간 넘게 달래지지 않는 울음, 경련, 축 처져서 잘 안 깸','얼굴·입술 붓기, 두드러기, 숨쉬기 힘듦(알레르기는 대개 30분 안 → 접종 후 20~30분 병원에서 기다리기)','로타 접종 후 1주 안에 발작적 울음·구토·피 섞인 변'] },
+  { t:'💡 알아두면 좋은 것', items:['여러 백신 같은 날 맞아도 안전하고 효과도 같음(권장)','생백신(MMR·수두·일본뇌염 생백신)끼리는 같은 날 맞거나 4주 간격','영아는 허벅지 바깥쪽에 주사','당일 목욕은 병원 안내 따르기 — 해도 짧게, 접종 부위 문지르지 않기','이상반응이 있었다면 다음 접종 때 꼭 말하기'] },
 ];
 
 /* ===== 할일·가이드 섹션 ===== */
@@ -3757,10 +3894,159 @@ const GUIDE = [
     { w:'24~26주', wFrom:23, wTo:26, feedN:4.5, weight:'7.7~7.9kg (6개월 = 출생체중 2.5배 근처. 이후 1년까지 +2kg만 — 느려지는 게 정상)', feed:'분유 800~1,000ml / 4~5회 + 이유식 시작(쌀미음 1일 1회부터). 이유식 후에도 분유가 주식', wake:'2.25~2.5h', nap:'2~3회', notes:['원더윅스 5차 도약 — 낯가림 본격화(건강한 애착의 증거)','뒤집기 자유자재 → 배밀이 준비. 바닥 환경 정리'], admin:'6개월 접종 3차 + 인플루엔자' },
   ]},
 ];
+// ===== 주별 상세 (발달 · 놀이 · 돌봄 · 병원 가야 할 신호 · 엄마아빠) — 키 = 주차(1부터) =====
+// 일반적인 발달 평균 기준. 개인차 ±2~4주는 정상.
+const GUIDE_EXTRA = {
+  1: { dev:['모로(깜짝)·빨기·쥐기 반사가 강함','20~30cm 거리만 흐릿하게 보임 — 수유할 때 엄마 얼굴 거리','엄마 목소리·냄새를 이미 구분'],
+       play:['20~30cm 거리에서 눈 맞추고 천천히 말 걸기','맨살 안기(캥거루 케어) 10~20분 — 체온·호흡 안정','조용한 자장가, 심장 소리 들려주기'],
+       care:['배꼽은 소독보다 "건조"가 핵심 — 기저귀 앞을 접어 공기 통하게','탯줄 떨어지기 전엔 부분 목욕(가제수건)','항상 등 대고 재우기, 푹신한 이불·베개·범퍼 없이','실내 22~24℃ · 습도 50~60%'],
+       warn:['체온 38.0℃ 이상 → 3개월 미만은 바로 소아과/응급실','노란 황달이 배·손발까지 내려오거나, 처지고 잘 안 먹음','생후 5일 이후 소변 기저귀 하루 6개 미만','배꼽 주변이 빨갛게 붓거나 냄새·고름'],
+       parent:['산모: 오로·회음부/수술 부위 관리, 누울 수 있을 때 무조건 눕기','아빠: 기저귀·트림·목욕 전담해서 산모 연속 수면 3~4시간 만들어주기'] },
+  2: { dev:['흑백처럼 대비 강한 무늬를 오래 봄','큰 소리에 깜짝, 익숙한 목소리에 조용해짐'],
+       play:['흑백 초점책 20~30cm, 한 장에 10~20초씩','딸랑이를 좌우로 천천히 — 소리 쪽으로 반응 보기','그림책 소리 내어 읽기(내용보다 목소리 리듬)'],
+       care:['손톱은 잘 때 아기용 가위나 줄로 — 얼굴 긁힘 방지','수유 중간·후 트림(어깨 걸치기/앉혀서 턱 받치기)','속싸개는 다리는 개구리 자세로 여유 있게(고관절)'],
+       warn:['수유 후 뿜듯이 쏟는 분수토가 반복(2~8주 유문협착 가능)','초록색(담즙) 구토는 즉시 진료','숨이 분당 60회 이상으로 빠르거나 입술이 파래짐'],
+       parent:['산후 우울감(베이비블루)은 흔함 — 2주 넘게 계속되거나 심해지면 상담','방문객은 최소로, 손 씻기 필수'] },
+  3: { dev:['엎드리면 고개를 잠깐 들었다 옆으로 돌림','얼굴을 뚫어지게 보는 시간이 길어짐'],
+       play:['아빠 가슴 위에 엎드리기(가슴 터미타임) 1~2분','혀 내밀기·입 벌리기 천천히 보여주기 — 따라 하기도 함','얼굴 가까이 표정 크게 바꾸기'],
+       care:['탯줄 떨어지고 배꼽 마르면 통목욕 시작: 38~40℃, 5~10분','저녁 보챔(영아산통) — 안고 걷기·백색소음·배 마사지(시계방향)','⚠️ 절대 세게 흔들지 않기(흔들린아이증후군). 한계면 아기를 침대에 두고 잠깐 자리 피하기'],
+       warn:['우는 것 + 발열·구토·잘 안 먹음·처짐이 같이 오면 진료','울음소리가 평소와 확연히 다르게 날카로움'],
+       parent:['밤 교대 스케줄 정하기(예: 22~3시 아빠 / 3~8시 엄마)'] },
+  4: { dev:['소리가 나면 움직임을 멈추고 집중','팔다리 휘젓기가 활발해짐'],
+       play:['터미타임 하루 여러 번, 깨어 있을 때 1~3분씩','흑백 모빌을 30cm 위에 — 너무 오래 틀어두지 않기','짧은 산책(직사광선·사람 많은 곳 피하기)'],
+       care:['두피 노란 딱지(지루성) — 목욕 전 보습제로 불려서 살살','얼굴 좁쌀(신생아 여드름)은 대부분 저절로 사라짐, 짜지 않기','BCG 부위가 2~3주 뒤 곪고 딱지 지는 건 정상 — 짜거나 소독하지 않기'],
+       warn:['눈곱이 계속 끼고 눈이 붉음','배꼽에서 진물이 계속 나거나 살이 튀어나옴'],
+       parent:['영유아검진 1차(생후 14~35일) 놓치지 않기'] },
+  5: { dev:['"아~ 우~" 소리 내기(쿠잉) 시작','사회적 미소 조짐'],
+       play:['아기가 소리 내면 멈추고 똑같이 따라 해주기 — 대화 주고받기','흑백 → 빨강이 섞인 대비로 넓히기','손바닥·발바닥 살살 쓸어주기'],
+       care:['낮엔 커튼 열고 생활 소음 OK, 밤 수유는 조명 최소·말 최소','기저귀 발진 — 물로 닦고 완전히 말린 뒤 크림, 가끔 기저귀 벗겨두기'],
+       warn:['도약기 보챔은 정상이지만 수유 거부·발열이 같이 오면 진료'],
+       parent:['엄마 혼자 외출/휴식 시간 1~2시간 주 1회 만들기'] },
+  6: { dev:['첫 사회적 미소 — 얼굴 보고 웃음','움직이는 물체를 눈으로 90도 정도 따라감'],
+       play:['웃으면 크게 반응해주기 — 웃음이 더 늘어남','딸랑이·장난감을 좌우로 천천히 움직여 눈 추적','배 위 터미타임 + 얼굴 마주 보기'],
+       care:['저녁 마녀시간: 초저녁부터 자극 줄이기, 어두운 방·백색소음','하루 총 수면 14~17시간이 보통'],
+       warn:['6주가 지나도 눈맞춤·미소가 전혀 없으면 다음 검진 때 상의'],
+       parent:['산모 6주 산후검진 — 운동·부부관계 재개는 의사 확인 후'] },
+  7: { dev:['옹알이 "아~ 우~"가 늘어남','손을 입으로 가져감(자기 진정)'],
+       play:['옹알이 대화 — 아기 소리 뒤에 2~3초 기다렸다 대답','질감 다른 천(부드러운/바스락/울퉁불퉁) 만지게 하기','노래 + 손동작(반짝반짝 작은 별)'],
+       care:['손 빨기는 자기 진정 능력 — 말리지 않아도 됨','침이 늘면 가제수건으로 턱 톡톡 닦기'],
+       warn:['한쪽으로만 고개를 돌리고 반대쪽을 싫어함(사경 의심) → 검진 때 상의'],
+       parent:[] },
+  8: { dev:['터미타임에서 고개를 45도까지 듦','빨강·노랑 같은 색을 구분하기 시작'],
+       play:['컬러 모빌·컬러 초점책으로 교체','깨지지 않는 아기 거울 보여주기','터미타임 하루 합계 15~30분 목표(여러 번 나눠서)'],
+       care:['2개월 접종 전에 체중 기준 해열제 용량을 소아과에서 확인해두기','접종 당일은 무리한 외출 피하고 컨디션 관찰'],
+       warn:['접종 후 39℃ 이상, 3시간 넘게 달래지지 않는 울음, 축 처짐 → 진료'],
+       parent:['접종 수첩·예방접종도우미 앱 기록 확인'] },
+  9: { dev:['주먹 쥔 손이 자주 펴짐, 손에 쥐여주면 잠깐 잡음'],
+       play:['가벼운 딸랑이 손에 쥐여주기','얼굴 가렸다 "까꿍" (아직은 반응 연습)','산책하며 보이는 것 말로 설명해주기'],
+       care:['접종 부위 붓기·빨개짐은 1~2일 정상 — 차가운 수건 찜질','접종 당일 목욕은 소아과 안내 따르기(보통 가능)'],
+       warn:['접종 부위가 3일 넘게 커지고 뜨거움'],
+       parent:[] },
+  10: { dev:['자기 손을 발견하고 뚫어지게 봄','손을 모으기 시작'],
+        play:['손목 딸랑이·양말 딸랑이 — 움직이면 소리 나는 것','손가락 하나씩 마사지하며 노래','손뼉 쳐주고 따라 하게 기다리기'],
+        care:['침이 많아지는데 이 시기 침은 치아와 무관한 경우가 많음, 턱받이 사용'],
+        warn:[],
+        parent:['부부 각자 쉬는 시간 정기적으로'] },
+  11: { dev:['목 가누기 진행 — 안았을 때 흔들림이 줄어듦','엎드려서 팔꿈치로 상체 지탱 시도'],
+        play:['터미타임 앞에 장난감 놓아 고개 들게 하기','부모 무릎 위 엎드리기, 짐볼 위에서 살살(꼭 잡고)','같은 그림책 반복해 읽기'],
+        care:['뒤통수 한쪽이 납작하면 재울 때 방향 바꾸고, 깨어 있을 때 터미타임 늘리기'],
+        warn:[],
+        parent:[] },
+  12: { dev:['소리 나는 쪽으로 고개를 돌림','소리 내어 웃기 시작'],
+        play:['간지럼·"부르르" 입소리로 웃게 하기','리듬 있는 음악에 맞춰 살살 흔들기','거울 속 자기 얼굴 보여주기'],
+        care:['밤잠 루틴 고정(목욕 → 수유 → 어둡게 → 눕히기), 매일 같은 순서·시간'],
+        warn:['3개월 무렵에도 목을 전혀 못 가누거나 소리에 반응이 없으면 상의'],
+        parent:[] },
+  13: { dev:['목 가누기 거의 완성','손으로 매달린 장난감을 툭툭 침'],
+        play:['아기체육관(플레이짐) — 누워서 치고 발로 차기','100일 사진 촬영(아기 컨디션 좋은 오전에)','손에 닿는 곳에 장난감 매달기'],
+        care:['100일(생후 100일째) 무렵 — 백일 준비는 아기 수면 시간 피해서'],
+        warn:[],
+        parent:['백일 행사는 간소하게, 방문객 많으면 아기 휴식 공간 따로'] },
+  14: { dev:['두 손을 모아 쥐기, 잡은 건 뭐든 입으로'],
+        play:['치발기·손잡이 있는 가벼운 장난감','소리·질감이 다른 장난감 번갈아 주기','"이건 빨간 공이야"처럼 이름 붙여 말해주기'],
+        care:['입에 넣는 장난감은 자주 세척','휴지심 구멍에 들어가는 크기의 물건은 손 닿는 곳에서 치우기(질식)'],
+        warn:[],
+        parent:[] },
+  15: { dev:['옆으로 구르기 — 뒤집기 준비','밤잠이 흐트러질 수 있음(4개월 수면퇴행)'],
+        play:['옆으로 눕혀 놀기, 다리 살짝 넘겨주며 뒤집기 도와주기','누워서 발 들어 올리기 놀이'],
+        care:['⚠️ 뒤집기 조짐이 보이면 속싸개 중단 → 팔 나오는 수면조끼로','퇴행기엔 루틴을 더 지키기, 새 습관은 이때 만들지 않기'],
+        warn:[],
+        parent:['수면퇴행은 2~6주면 지나감 — 교대 수면 다시 챙기기'] },
+  16: { dev:['손을 뻗어 물건을 잡으려 함','소리 내어 크게 웃음'],
+        play:['장난감을 손이 닿을 듯 말 듯한 거리에 두기','까꿍 놀이 — 반응이 커지는 시기'],
+        care:['4개월 접종 전후 컨디션 관찰, 해열제 용량 체중 기준으로 다시 확인'],
+        warn:['접종 후 고열·경련·심한 처짐 → 즉시 진료'],
+        parent:['영유아검진 2차(4~6개월) 예약'] },
+  17: { dev:['뒤집기 성공(개인차 큼)','누워서 자기 발을 잡음'],
+        play:['발목 딸랑이, 발 잡고 "까꿍"','천천히 들어 올리는 비행기 놀이(목 지지, 세게 흔들지 않기)'],
+        care:['⚠️ 기저귀 갈 때·소파 위에서 한 손은 항상 아기 몸에(낙상 주의)','뒤집어 엎드려 자면: 스스로 뒤집을 수 있으면 두어도 됨, 처음 눕힐 땐 항상 등으로'],
+        warn:['높은 곳에서 떨어진 뒤 구토·처짐·계속 울음 → 즉시 진료'],
+        parent:[] },
+  18: { dev:['자기 이름 소리에 반응하기 시작','옹알이에 "바·마" 같은 자음이 섞임'],
+        play:['이름 자주 불러주기','그림책 넘기며 그림 가리키고 이름 말하기','촉감책·헝겊책'],
+        care:[],
+        warn:[],
+        parent:[] },
+  19: { dev:['앉혀주면 잠깐 버팀(보조 앉기)','물건을 한 손에서 다른 손으로 옮김'],
+        play:['쿠션 받치고 짧게 보조 앉기 + 앞에 장난감','공을 앞에서 천천히 굴려 보여주기'],
+        care:['보행기·점퍼루는 하루 짧게만(발달·안전상 오래 쓰지 않기)'],
+        warn:[],
+        parent:[] },
+  20: { dev:['낯선 사람 앞에서 멈칫(낯가림 조짐)','자기 소리를 크게·작게 실험'],
+        play:['까꿍 놀이 본격','부모가 컵 쌓으면 아기가 무너뜨리기','음악에 맞춰 흔들기·손뼉'],
+        care:['이유식 시작 시기 소아과 상담(보통 만 6개월 전후)','이유식 도구 미리: 실리콘 스푼, 턱받이, 하이체어/범보'],
+        warn:[],
+        parent:[] },
+  21: { dev:['배를 축으로 빙글 도는 피벗 — 배밀이 준비','손으로 바닥을 긁고 끌어당김'],
+        play:['조금 앞에 장난감 두고 뻗게 하기','질감 다른 매트 위에서 엎드려 놀기'],
+        care:['바닥 정리: 전선·작은 물건 치우기, 콘센트 커버, 모서리 보호대'],
+        warn:[],
+        parent:[] },
+  22: { dev:['떨어뜨리면 떨어진다는 원인-결과를 알기 시작'],
+        play:['떨어뜨리기 놀이 받아주기(주워주고 또 떨어뜨리기)','누르면 소리 나는 버튼 장난감'],
+        care:['이유식 첫 재료(쌀미음) 계획, 새 재료는 2~3일 간격으로 하나씩'],
+        warn:[],
+        parent:[] },
+  23: { dev:['엄마를 찾고 떨어지면 불안해함'],
+        play:['촉감볼·헝겊책 페이지 넘기기 — 손가락 쓰는 놀이','"엄마 어디 있지? 여기!" 숨었다 나타나기'],
+        care:['자는 공간은 여전히 단단한 매트, 침대 안 인형·쿠션 없이'],
+        warn:[],
+        parent:[] },
+  24: { dev:['보조 없이 잠깐 앉기 시작(개인차 큼)','음식에 관심 — 어른 먹는 걸 쳐다봄'],
+        play:['앉은 자세에서 양손으로 장난감 탐색','식탁에 같이 앉아 먹는 모습 보여주기'],
+        care:['이유식 시작: 하루 1회, 오전에 새 재료(반응 보기 쉬움)','꿀은 돌 전 금지(영아 보툴리누스증)','물은 이유식 시작 후 컵으로 소량 연습 가능'],
+        warn:['이유식 후 두드러기·입술/눈 붓기·반복 구토·숨소리 이상 → 즉시 진료'],
+        parent:[] },
+  25: { dev:['낯가림 본격(건강한 애착의 신호)','숨긴 물건이 있다는 걸 알기 시작(대상영속성)'],
+        play:['장난감을 천으로 반쯤 가리고 찾게 하기','까꿍 — 가리는 시간 조금씩 늘리기'],
+        care:['낯가림 심하면 억지로 안기지 말고 부모 품에서 천천히 적응'],
+        warn:[],
+        parent:[] },
+  26: { dev:['손 짚고 혼자 앉기, 배밀이','첫 이 나올 수 있음(보통 아래 앞니)'],
+        play:['공 굴려주고 잡게 하기','노래 + 율동(곤지곤지·잼잼 보여주기)'],
+        care:['이 나기 시작하면 거즈/실리콘 칫솔로 잇몸·이 닦기','치발기는 냉장 보관(냉동 X)','인플루엔자: 생후 6개월 이상 첫 접종은 4주 간격 2회'],
+        warn:['이 날 때 미열은 흔하지만 38℃ 넘는 열은 이 때문이라고 단정하지 말고 진료'],
+        parent:[] },
+};
+// 여러 주가 묶인 칸(13~14주 등)은 한 주씩 나눔 — 몸무게·수유·깨시는 그대로 이어받고, 공통 메모·팁은 첫 주, 행정은 마지막 주에
+GUIDE.forEach(g => {
+  g.weeks = g.weeks.flatMap(w => {
+    const n = (w.wTo || 0) - (w.wFrom || 0);
+    if (w.wFrom == null || n <= 1) return [w];
+    return Array.from({ length: n }, (_, i) => ({
+      ...w, w: `${w.wFrom + i + 1}주`, wFrom: w.wFrom + i, wTo: w.wFrom + i + 1,
+      notes: i === 0 ? (w.notes || []) : [], tip: i === 0 ? w.tip : null, admin: i === n - 1 ? w.admin : null,
+    }));
+  });
+  g.weeks.forEach(w => { if (w.wFrom != null) w.extra = GUIDE_EXTRA[w.wFrom + 1] || null; });
+});
 const GUIDE_REF = [
   { t:'🍼 수유량 보는 법', items:['공식(×170)은 출발점. 아기가 남기거나 더 찾으면 아기가 맞음 — 공식에 아기를 맞추지 말 것','1회량 늘리는 신호: 다 먹고도 젖병 놓지 않고 빰, 수유 간격이 계속 짧아짐 → 10~20ml씩 증량','토 자주 하면 1회량 과다일 수 있음 → 1회량 줄이고 횟수 유지','주 1회 체중 체크(수유 전·맨몸) → 주당 +250g(첫 2~3개월) 근처면 양이 맞다는 뜻','3개월 이후 주당 증가가 150g대로 떨어지는 건 정상 감속이지 수유 부족 아님'] },
   { t:'⚖️ 몸무게 보는 법', items:['25~50백분위 라인 따라가면 완벽','진짜 지표 셋: ① 꾸준히 우상향 ② 소변 기저귀 하루 6개+ ③ 잘 먹고 잘 잠','2주 이상 정체·감소 시에만 소아과 상담'] },
   { t:'🧠 항상 기억할 것', items:['깨시 넘기면 과피로 → 더 못 잠. 시계보다 아기 신호(하품, 눈 비비기, 멍때리기)','도약·급성장기·수면퇴행 = 전부 지나감','주차별 수치는 평균. 우리 아기만의 속도가 정답'] },
+  { t:'😴 안전하게 재우기', items:['항상 등 대고 눕히기(스스로 뒤집을 수 있게 되면 뒤집어 자는 건 두어도 됨)','단단하고 평평한 매트, 침대 안에 베개·이불·인형·범퍼 없이','같은 방 다른 침대(한 침대 같이 자기는 질식 위험)','덥게 입히지 않기 — 목덜미 만져 땀나면 과열'] },
+  { t:'🌡️ 열이 날 때', items:['3개월 미만 38.0℃ 이상 → 해열제 먼저 먹이지 말고 바로 소아과/응급실','3개월 이후: 해열제는 체중 기준 용량(아세트아미노펜 4시간, 이부프로펜은 6개월 이후 6시간 간격)','열 + 처짐·잘 안 먹음·소변 줄어듦·발진·경련 → 즉시 진료','체온은 겨드랑이/귀 중 하나로 정해서 같은 방법으로 재기'] },
+  { t:'🚨 바로 병원 가야 하는 신호', items:['숨이 가쁘고 갈비뼈 사이가 쑥쑥 들어감, 입술이 파래짐','초록색 구토, 피 섞인 구토나 변, 하얀(회색) 변','8시간 넘게 소변 없음, 대천문이 푹 꺼짐','깨우기 힘들 정도로 처지거나 달래지지 않는 날카로운 울음'] },
 ];
 function babyAgeMonths(){
   const k = getKid(); if (!k || !k.birthDate) return null;
@@ -3800,18 +4086,25 @@ function renderAdminChecklist(){
 }
 window.toggleAdmin = (id) => { const c = getKidChecklist(); if (!c) return; if (c.done[id]) delete c.done[id]; else c.done[id] = true; save(); renderAdminChecklist(); };
 window.delAdmin = (id) => { const c = getKidChecklist(); if (!c) return; c.custom = c.custom.filter(t => t.id !== id); delete c.done[id]; save(); renderAdminChecklist(); };
+// 생년월일 'YYYY-MM-DD' → 현지(한국) 자정 Date. new Date('YYYY-MM-DD')는 UTC 자정(=한국 오전 9시)이라 쓰면 안 됨
+function localBirthDate(s){
+  const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(s || ''); if (!m) return null;
+  return new Date(+m[1], +m[2] - 1, +m[3]);
+}
 function babyAgeWeeks(){
   const k = getKid(); if (!k || !k.birthDate) return null;
-  const b = new Date(k.birthDate), n = new Date();
-  if (b > n) return -1;
-  return Math.floor((n - b) / (7 * 86400000));
+  const b = localBirthDate(k.birthDate); if (!b) return null;
+  const n = new Date(); const today = new Date(n.getFullYear(), n.getMonth(), n.getDate());
+  if (b > today) return -1;
+  const days = Math.round((today - b) / 86400000);   // 자정 기준 경과 일수
+  return Math.floor(days / 7);
 }
 let guideOpen = null;
 window.toggleGuideMonth = (gi) => { guideOpen = (guideOpen === gi) ? -1 : gi; renderAgeGuide(); };
 function renderAgeGuide(){
   const k = getKid();
   const am = babyAgeMonths(), aw = babyAgeWeeks();
-  const birth = (k && k.birthDate) ? new Date(k.birthDate) : null;
+  const birth = (k && k.birthDate) ? localBirthDate(k.birthDate) : null;
   const fmtMD = (d) => `${d.getMonth()+1}/${d.getDate()}`;
   // 주차의 실제 날짜 범위 (생년월일 기준 자동 계산)
   const weekRange = (w) => {
@@ -3828,12 +4121,13 @@ function renderAgeGuide(){
     if (gs.length) latestW = Number(gs[0].weight);
   }
   // 현재 대구분(개월)·주차
+  // 현재 칸은 "주차가 속한 칸"으로 결정 (개월 경계와 주 경계가 달라 음영이 사라지던 문제 방지)
   let curIdx = -1, curWeek = null;
-  if (am != null && am >= 0){
-    curIdx = GUIDE.findIndex(g => am >= g.mFrom && am < g.mTo);
-    if (curIdx < 0 && am >= GUIDE[GUIDE.length-1].mFrom) curIdx = GUIDE.length - 1;
+  if (aw != null && aw >= 0){
+    curIdx = GUIDE.findIndex(g => g.weeks.some(w => w.wFrom != null && aw >= w.wFrom && aw < w.wTo));
+    if (curIdx >= 0) curWeek = GUIDE[curIdx].weeks.find(w => w.wFrom != null && aw >= w.wFrom && aw < w.wTo) || null;
+    else if (am != null && am >= GUIDE[GUIDE.length-1].mFrom) curIdx = GUIDE.length - 1;   // 가이드 범위 이후
   }
-  if (curIdx >= 0 && aw != null && aw >= 0) curWeek = GUIDE[curIdx].weeks.find(w => w.wFrom != null && aw >= w.wFrom && aw < w.wTo) || null;
   if (guideOpen == null) guideOpen = curIdx >= 0 ? curIdx : 0;
 
   // 상단: 안내 + 실제 체중 기반 수유량 계산
@@ -3856,12 +4150,22 @@ function renderAgeGuide(){
     const isCur = gi === curIdx;
     const open = gi === guideOpen;
     const weeksHtml = g.weeks.map(w => {
-      const wCur = isCur && w.wFrom != null && aw != null && aw >= 0 && aw >= w.wFrom && aw < w.wTo;
+      const wCur = isCur && w === curWeek;
       const rows = [];
       if (w.weight) rows.push(`<div>⚖️ <b>표준 몸무게</b> · ${escapeHtml(w.weight)}</div>`);
       if (w.feed)   rows.push(`<div>🍼 <b>수유</b> · ${escapeHtml(w.feed)}</div>`);
       if (w.wake || w.nap) rows.push(`<div>⏰ <b>깨시 Max</b> · ${escapeHtml(w.wake || '-')} &nbsp;·&nbsp; 💤 <b>낮잠</b> · ${escapeHtml(w.nap || '-')}</div>`);
       (w.notes || []).forEach(n => rows.push(`<div>📌 ${escapeHtml(n)}</div>`));
+      const x = w.extra;
+      const sec = (icon, title, list, color) => (list && list.length)
+        ? `<div style="margin-top:4px;"><div style="font-weight:700;color:${color};">${icon} ${title}</div><ul style="margin:2px 0 0;padding-left:18px;">${list.map(i => `<li>${escapeHtml(i)}</li>`).join('')}</ul></div>` : '';
+      if (x) {
+        rows.push(sec('🌱', '이번 주 발달', x.dev, '#15803D'));
+        rows.push(sec('🧸', '하면 좋은 놀이', x.play, '#7C3AED'));
+        rows.push(sec('🛁', '돌봄 · 안전', x.care, '#0369A1'));
+        rows.push(sec('🚨', '이럴 땐 소아과', x.warn, '#B91C1C'));
+        rows.push(sec('👨‍👩‍👧', '엄마 · 아빠', x.parent, '#9A3412'));
+      }
       if (w.admin)  rows.push(`<div>🏥 <b>행정/접종</b> · ${escapeHtml(w.admin)}</div>`);
       if (w.tip)    rows.push(`<div>💡 <b>팁</b> · ${escapeHtml(w.tip)}</div>`);
       const range = weekRange(w);
@@ -3926,6 +4230,37 @@ function autoFillVaccines(kidId) {
 }
 
 /* ===== 예방접종 렌더 ===== */
+let vaccGuideOpen = false, vaccShowFar = false;
+const vaccInfoOpen = new Set();
+window.toggleVaccGuide = () => { vaccGuideOpen = !vaccGuideOpen; renderVaccine(); };
+window.toggleVaccFar = () => { vaccShowFar = !vaccShowFar; renderVaccine(); };
+window.toggleVaccInfo = (id) => { if (vaccInfoOpen.has(id)) vaccInfoOpen.delete(id); else vaccInfoOpen.add(id); renderVaccine(); };
+function renderVaccineGuide() {
+  const el = document.getElementById('vaccineGuide'); if (!el) return;
+  const order = ['combo','pcv','rota','hepb','bcg','flu','mmr','var','hepa','je','checkup','oral'];
+  const inner = !vaccGuideOpen ? '' : `
+    <div style="padding:0 14px 14px;display:grid;gap:10px;">
+      ${VACC_COMMON_TIPS.map(s => `<div style="border:1px solid var(--border);border-radius:10px;padding:10px 12px;background:#fff;">
+        <div style="font-size:12.5px;font-weight:700;margin-bottom:4px;">${s.t}</div>
+        <ul style="margin:0;padding-left:18px;font-size:12px;line-height:1.6;color:var(--text-secondary);">${s.items.map(i => `<li>${escapeHtml(i)}</li>`).join('')}</ul>
+      </div>`).join('')}
+      <div style="font-size:12.5px;font-weight:700;margin-top:2px;">💉 백신별 설명 (탭해서 펼치기)</div>
+      ${order.map(key => { const x = VACCINE_INFO[key]; const b = VACC_FEVER_BADGE[x.fever];
+        return `<details style="border:1px solid var(--border);border-radius:10px;background:#fff;">
+          <summary style="padding:10px 12px;cursor:pointer;font-size:12.5px;font-weight:600;display:flex;justify-content:space-between;gap:8px;align-items:center;">
+            <span>${escapeHtml(x.title)}</span>${b ? `<span style="font-size:10.5px;font-weight:700;color:${b.c};background:${b.bg};padding:1px 7px;border-radius:999px;white-space:nowrap;">${b.t}</span>` : ''}
+          </summary>
+          <div style="padding:0 12px 10px;">${vaccInfoHtml(key)}</div>
+        </details>`; }).join('')}
+      <div style="font-size:10.5px;color:var(--text-tertiary);">질병관리청 표준예방접종일정 기준 요약이에요. 병원마다 보유 백신이 다르고 일정이 바뀔 수 있으니 접종 전 소아과·예방접종도우미(nip.kdca.go.kr)에서 확인하세요.</div>
+    </div>`;
+  el.innerHTML = `<div style="border:1px solid #BFDBFE;border-radius:12px;background:#EFF6FF;overflow:hidden;">
+    <button type="button" onclick="toggleVaccGuide()" style="width:100%;text-align:left;background:none;border:none;padding:12px 14px;cursor:pointer;display:flex;justify-content:space-between;align-items:center;font-family:inherit;">
+      <span style="font-size:13px;font-weight:700;color:#1E3A8A;">📖 예방접종 알아두기 <span style="font-weight:400;font-size:11px;color:#3B82F6;">종류 비교 · 많이 맞는 백신 · 접종열</span></span>
+      <span style="color:#3B82F6;font-size:12px;">${vaccGuideOpen ? '▲ 접기' : '▼ 펼치기'}</span>
+    </button>${inner}
+  </div>`;
+}
 function renderVaccine() {
   const k = getKid(); if (!k) return;
   const list = state.vaccinations.filter(v => v.kidId === k.id)
@@ -3954,6 +4289,7 @@ function renderVaccine() {
       <div style="font-size:20px;font-weight:700;color:${overdue > 0 ? '#B91C1C' : 'var(--text-secondary)'};margin-top:2px;">${overdue}건</div>
     </div>
   `;
+  renderVaccineGuide();
 
   const wrap = document.getElementById('vaccineList');
   if (list.length === 0) {
@@ -3961,9 +4297,15 @@ function renderVaccine() {
     return;
   }
 
+  // 6개월 넘게 남은 일정(완료 안 된 것)은 기본 접어두기 — 목록이 너무 길어지지 않게
+  const farLimit = new Date(); farLimit.setMonth(farLimit.getMonth() + 6);
+  const farIso = isoDate(farLimit);
+  const isFar = (v) => !v.completedDate && v.scheduledDate && v.scheduledDate > farIso;
+  const farCount = list.filter(isFar).length;
+  const shown = vaccShowFar ? list : list.filter(v => !isFar(v));
   // 월별 그룹화
   const byMonth = {};
-  list.forEach(v => {
+  shown.forEach(v => {
     const key = (v.scheduledDate || '').slice(0,7) || '미지정';
     if (!byMonth[key]) byMonth[key] = [];
     byMonth[key].push(v);
@@ -3980,8 +4322,13 @@ function renderVaccine() {
           const isOverdue = !isComplete && v.scheduledDate && v.scheduledDate < today;
           const bgColor = isComplete ? '#F0FDF4' : (isOverdue ? '#FEF2F2' : '#fff');
           const borderColor = isComplete ? '#BBF7D0' : (isOverdue ? '#FECACA' : 'var(--border)');
+          const gk = vaccGroupOf(v); const gi = gk ? VACCINE_INFO[gk] : null;
+          const fb = gi ? VACC_FEVER_BADGE[gi.fever] : null;
+          const sched = KR_VACCINE_SCHEDULE.find(s => s.id === v.vaccineId);
+          const openInfo = vaccInfoOpen.has(v.id);
           return `
-            <div style="display:flex;align-items:center;gap:12px;padding:12px 14px;background:${bgColor};border:1px solid ${borderColor};border-radius:10px;margin-bottom:6px;">
+            <div style="padding:12px 14px;background:${bgColor};border:1px solid ${borderColor};border-radius:10px;margin-bottom:6px;">
+             <div style="display:flex;align-items:center;gap:12px;">
               <div style="font-size:24px;flex-shrink:0;">${isComplete ? '✅' : ((v.name||'').includes('검진') ? '🩺' : '💉')}</div>
               <div style="flex:1;min-width:0;">
                 <div style="font-size:13px;font-weight:600;${isComplete ? 'text-decoration:line-through;color:var(--text-tertiary);' : ''}">${escapeHtml(v.name)}</div>
@@ -3991,17 +4338,24 @@ function renderVaccine() {
                   ${isOverdue ? ' · ⚠️ 지연됨' : ''}
                   ${v.hospital ? ` · ${escapeHtml(v.hospital)}` : ''}
                 </div>
+                ${(sched && sched.info) || fb ? `<div style="font-size:11px;margin-top:3px;display:flex;flex-wrap:wrap;gap:4px;align-items:center;">
+                  ${fb ? `<span style="font-weight:700;color:${fb.c};background:${fb.bg};padding:1px 7px;border-radius:999px;">${fb.t}</span>` : ''}
+                  ${sched && sched.info ? `<span style="color:var(--text-tertiary);">${escapeHtml(sched.info)}</span>` : ''}
+                </div>` : ''}
               </div>
-              <div style="display:flex;gap:4px;flex-shrink:0;">
+              <div style="display:flex;gap:4px;flex-shrink:0;flex-wrap:wrap;justify-content:flex-end;">
+                ${gi ? `<button class="btn small" onclick="toggleVaccInfo('${v.id}')" title="백신 설명">${openInfo ? '▲' : 'ℹ️'}</button>` : ''}
                 ${!isComplete ? `<button class="btn small primary" onclick="completeVaccine('${v.id}')">완료</button>` : `<button class="btn small" onclick="uncompleteVaccine('${v.id}')">↩ 되돌리기</button>`}
                 <button class="btn small" onclick="editVaccine('${v.id}')">수정</button>
               </div>
+             </div>
+             ${openInfo && gi ? `<div style="margin-top:10px;padding-top:10px;border-top:1px dashed var(--border);"><div style="font-size:12.5px;font-weight:700;margin-bottom:4px;">${escapeHtml(gi.title)}</div>${vaccInfoHtml(gk)}</div>` : ''}
             </div>
           `;
         }).join('')}
       </div>
     `;
-  }).join('');
+  }).join('') + (farCount ? `<button type="button" class="btn small" style="width:100%;margin-top:4px;" onclick="toggleVaccFar()">${vaccShowFar ? '▲ 먼 일정 접기' : `▼ 6개월 이후 일정 ${farCount}건 더 보기`}</button>` : '');
 }
 
 window.editVaccine = (id) => openVaccineModal(id);
