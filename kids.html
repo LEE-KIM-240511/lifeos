@@ -2821,13 +2821,8 @@ function renderCareSummary() {
     }
   }
 
-  // 수면 총 시간
-  let sleepMs = 0;
-  sleeps.forEach(s => {
-    const start = parseDt(s.startTime);
-    const end = s.endTime ? parseDt(s.endTime) : null;
-    if (start && end) sleepMs += end.getTime() - start.getTime();
-  });
+  // 수면 총 시간 — 그 날 0시~24시 안에 들어오는 시간만 (자정 넘긴 밤잠은 날짜별로 나눔)
+  const sleepMs = sleepMsInDay(k.id, dateStr);
 
   // 발열 여부
   const maxTemp = temps.reduce((m,t) => Math.max(m, Number(t.temp) || 0), 0);
@@ -4657,14 +4652,20 @@ function renderDayPattern() {
       });
     }
     if (patternFilter.sleep) {
-      state.sleeps.filter(s => s.kidId === k.id && (s.startTime||'').startsWith(date)).forEach(s => {
-        const dt = parseDt(s.startTime); if (!dt) return; any = true;
-        const end = s.endTime ? parseDt(s.endTime) : null;
-        const durH = end ? (end - dt) / 3600000 : 0.5;
+      // 자정을 넘긴 수면은 두 날 칸에 나눠 그림 (시작 날: 시작~24시, 다음 날: 0시~종료)
+      const dayStart = parseDt(date + 'T00:00'), dayEnd = new Date(dayStart.getTime() + 86400000);
+      state.sleeps.filter(s => s.kidId === k.id && s.startTime).forEach(s => {
+        const dt = parseDt(s.startTime); if (!dt) return;
+        const end = s.endTime ? parseDt(s.endTime) : (isoDate(dt) === isoDate(new Date()) ? new Date() : null);
+        const en = end && end > dt ? end : new Date(dt.getTime() + 30*60000);   // 종료 없으면 30분짜리 표시
+        if (en <= dayStart || dt >= dayEnd) return;   // 이 날과 안 겹침
+        any = true;
+        const segStart = dt > dayStart ? dt : dayStart, segEnd = en < dayEnd ? en : dayEnd;
         const tlabel = s.type==='night'?'밤잠':(s.type==='nap'?'낮잠':'수면');
         const parts = ['😴 '+tlabel, end?`${fmtTime(dt)}~${fmtTime(end)}`:`${fmtTime(dt)}~`, end?fmtDuration(end-dt):'진행 중'];
+        if (dt < dayStart) parts.push('(전날부터)'); else if (end && end > dayEnd) parts.push('(다음 날까지)');
         if (s.memo) parts.push(s.memo);
-        addBar(col, hourOf(dt), durH, '#5B7CE6', '', parts.join(' · '), 'block');
+        addBar(col, (segStart - dayStart) / 3600000, (segEnd - segStart) / 3600000, '#5B7CE6', '', parts.join(' · '), 'block');
       });
     }
     if (diaperAnyOn()) {
@@ -4729,6 +4730,29 @@ document.addEventListener('click', (e) => {
   if (e.target && e.target.classList && e.target.classList.contains('daypat-bar')) return;
   const tip = document.getElementById('dayPatternTip'); if (tip) tip.style.display = 'none';
 });
+
+// 특정 날짜(0시~24시) 안에 들어오는 수면 시간 합(ms). 자정을 넘긴 밤잠은 전날/다음날로 나눠서 셈.
+// 진행 중(종료 없음)인 수면은 지금 시각까지 센다. 어떤 날도 24시간을 넘지 않음.
+function sleepMsInDay(kidId, dateIso) {
+  const dayStart = parseDt(dateIso + 'T00:00'); if (!dayStart) return 0;
+  const dayEnd = new Date(dayStart.getTime() + 86400000);
+  const now = new Date();
+  let ms = 0;
+  state.sleeps.forEach(s => {
+    if (s.kidId !== kidId || !s.startTime) return;
+    const st = parseDt(s.startTime); if (!st) return;
+    let en = s.endTime ? parseDt(s.endTime) : now;
+    if (!en || en <= st) return;
+    const a = Math.max(st.getTime(), dayStart.getTime()), b = Math.min(en.getTime(), dayEnd.getTime());
+    if (b > a) ms += b - a;
+  });
+  return Math.min(ms, 86400000);
+}
+function sleepMsInRange(kidId, fromIso, toIso) {
+  let ms = 0; const d = parseDt(fromIso + 'T00:00'); const end = parseDt(toIso + 'T00:00'); if (!d || !end) return 0;
+  for (; d <= end; d.setDate(d.getDate() + 1)) ms += sleepMsInDay(kidId, isoDate(d));
+  return ms;
+}
 
 /* ===== 패턴/통계 서브탭 · 일과표(원형) · 간격패턴 · 통계 ===== */
 // 기간 내 케어 이벤트를 정규화해서 수집 (patternFilter 반영)
@@ -4926,7 +4950,10 @@ function renderStats() {
   const mlParts = [`유축 ${ml.pumpedmilk.toLocaleString('ko-KR')}ml`, `분유 ${ml.formula.toLocaleString('ko-KR')}ml`, (ml.mixed || ml.solid) ? `기타 ${(ml.mixed + ml.solid).toLocaleString('ko-KR')}ml` : ''].filter(Boolean).join(' · ');
   let gapSum = 0, gapN = 0;
   for (let i = 1; i < feeds.length; i++) { const gp = feeds[i].start - feeds[i-1].start; if (gp > 0 && gp < 24*3600000) { gapSum += gp; gapN++; } }
-  const sleeps = ev.filter(e => e.kind === 'sleep'); const sleepMs = sleeps.reduce((s,e) => s + (e.dur||0), 0);
+  // 수면: 기간 안 날짜별로 자정 기준 잘라서 합산 (밤잠이 이틀에 중복으로 들어가지 않게). 횟수는 기간 안에 시작한 수면만
+  const sleepMs = sleepMsInRange(k.id, isoDate(from), isoDate(to));
+  const fromIso = isoDate(from), toIso = isoDate(to);
+  const sleeps = state.sleeps.filter(s => s.kidId === k.id && s.startTime && s.startTime.slice(0,10) >= fromIso && s.startTime.slice(0,10) <= toIso);
   const diapers = ev.filter(e => e.kind === 'diaper');
   const pee = diapers.filter(e => e.dtype !== 'poo').length, poo = diapers.filter(e => e.dtype === 'poo' || e.dtype === 'both').length;
   const per = (n) => N > 1 ? (n/N).toFixed(1) + '/일' : '';
@@ -4990,14 +5017,8 @@ function renderChart() {
     });
   }
 
-  // 수면 데이터 (총 수면 시간, 분 단위)
-  const sleepMinutes = days.map(date => {
-    return state.sleeps.filter(s => s.kidId === k.id && (s.startTime||'').startsWith(date)).reduce((sum, s) => {
-      if (!s.startTime || !s.endTime) return sum;
-      const dur = (parseDt(s.endTime) - parseDt(s.startTime)) / 60000;
-      return sum + (dur > 0 ? dur : 0);
-    }, 0);
-  });
+  // 수면 데이터 (그 날 0시~24시 안의 수면 시간, 분 단위 — 자정 넘긴 밤잠은 날짜별로 나눔)
+  const sleepMinutes = days.map(date => sleepMsInDay(k.id, date) / 60000);
   const sleepHours = sleepMinutes.map(m => +(m/60).toFixed(1));
   const hasSleepData = sleepHours.some(h => h > 0);
 
